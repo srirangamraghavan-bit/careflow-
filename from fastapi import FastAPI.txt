@@ -1,0 +1,34 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from datetime import datetime
+
+app = FastAPI(title="CareFlow Data Bridge API", description="Live Ambulance Data Ingestion Hub")
+
+# This acts as our temporary database for the demonstration
+fake_database = []
+
+# This defines the structure of the ambulance data
+class AmbulanceData(BaseModel):
+    case_id: str
+    patient_status: str
+    heart_rate: int
+    oxygen_level: int
+    timestamp: str
+
+@app.post("/api/v1/ingest", tags=["Ambulance to Hospital Stream"])
+async def receive_ambulance_data(data: AmbulanceData):
+    # Save the incoming data to our "database"
+    fake_database.append(data.dict())
+    return {
+        "status": "200 OK", 
+        "message": "Data successfully received and mapped to database.",
+        "records_saved": len(fake_database)
+    }
+
+@app.get("/api/v1/database", tags=["Hospital ER Dashboard View"])
+async def view_hospital_database():
+    # Show everything saved in the database
+    return {
+        "total_active_cases": len(fake_database), 
+        "live_patient_data": fake_database
+    }

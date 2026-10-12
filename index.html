@@ -1,0 +1,2928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareFlow - Advanced Emergency Medical Dashboard</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb', // Primary Blue
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            severity: {
+              high: '#ef4444',
+              middle: '#f59e0b',
+              zero: '#10b981',
+            }
+          },
+          boxShadow: {
+            'card': '0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)',
+            'card-hover': '0 10px 25px -5px rgba(37, 99, 235, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
+            'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+            'modal': '0 25px 50px -12px rgba(15, 23, 42, 0.18)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Pulse animation for high-urgency alerts */
+    @keyframes ecg-scan {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .ecg-line {
+      position: relative;
+      overflow: hidden;
+    }
+    .ecg-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(37,99,235,0.4), transparent);
+      animation: ecg-scan 2s infinite linear;
+    }
+
+    /* Custom smooth scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    .badge-high {
+      background-color: #FEF2F2;
+      color: #DC2626;
+      border: 1px solid #FEE2E2;
+    }
+    .badge-middle {
+      background-color: #FFFBEB;
+      color: #D97706;
+      border: 1px solid #FEF3C7;
+    }
+    .badge-zero {
+      background-color: #ECFDF5;
+      color: #059669;
+      border: 1px solid #D1FAE5;
+    }
+
+    /* ================= THEME SYSTEM (Light, Dark, Colorblind) ================= */
+
+    /* DARK THEME (Hospital Night Shift) */
+    [data-theme="dark"],
+    [data-theme="dark"] body,
+    html[data-theme="dark"],
+    body[data-theme="dark"] {
+      background-color: #0b1120 !important;
+      color: #f1f5f9 !important;
+    }
+
+    [data-theme="dark"] #top-navbar {
+      background-color: rgba(15, 23, 42, 0.96) !important;
+      border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .bg-white {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .bg-slate-50,
+    [data-theme="dark"] .bg-slate-50\/80,
+    [data-theme="dark"] .bg-slate-50\/50 {
+      background-color: #0f172a !important;
+    }
+
+    [data-theme="dark"] .bg-slate-100,
+    [data-theme="dark"] .bg-slate-100\/80,
+    [data-theme="dark"] .bg-slate-100\/90 {
+      background-color: #1e293b !important;
+    }
+
+    [data-theme="dark"] .border-slate-100,
+    [data-theme="dark"] .border-slate-200,
+    [data-theme="dark"] .border-slate-200\/80,
+    [data-theme="dark"] .border-slate-200\/60,
+    [data-theme="dark"] .border-slate-200\/50 {
+      border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .text-slate-900,
+    [data-theme="dark"] .text-slate-800 {
+      color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .text-slate-700,
+    [data-theme="dark"] .text-slate-600 {
+      color: #cbd5e1 !important;
+    }
+
+    [data-theme="dark"] .text-slate-500,
+    [data-theme="dark"] .text-slate-400 {
+      color: #94a3b8 !important;
+    }
+
+    [data-theme="dark"] input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .theme-selector-group {
+      background-color: #0f172a !important;
+      border-color: #334155 !important;
+    }
+
+    [data-theme="dark"] .badge-high {
+      background-color: rgba(153, 27, 27, 0.4) !important;
+      color: #fca5a5 !important;
+      border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    }
+
+    [data-theme="dark"] .badge-middle {
+      background-color: rgba(180, 83, 9, 0.4) !important;
+      color: #fde68a !important;
+      border: 1px solid rgba(245, 158, 11, 0.5) !important;
+    }
+
+    [data-theme="dark"] .badge-zero {
+      background-color: rgba(6, 95, 70, 0.4) !important;
+      color: #6ee7b7 !important;
+      border: 1px solid rgba(16, 185, 129, 0.5) !important;
+    }
+
+    /* COLORBLIND THEME (Okabe-Ito / High Contrast & Geometric Indicator) */
+    [data-theme="colorblind"] body,
+    body[data-theme="colorblind"] {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+
+    [data-theme="colorblind"] .badge-high {
+      background-color: #ffedd5 !important;
+      color: #7c2d12 !important;
+      border: 2px solid #ea580c !important;
+      font-weight: 800 !important;
+    }
+
+    [data-theme="colorblind"] .badge-middle {
+      background-color: #e0f2fe !important;
+      color: #0369a1 !important;
+      border: 2px solid #0284c7 !important;
+      font-weight: 800 !important;
+    }
+
+    [data-theme="colorblind"] .badge-zero {
+      background-color: #e0e7ff !important;
+      color: #312e81 !important;
+      border: 2px solid #4338ca !important;
+      font-weight: 800 !important;
+    }
+
+    /* Progress bar transitions */
+    .transition-width {
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header id="top-navbar" class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo & Brand -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('screen-triage')">
+          <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-md shadow-brand-500/25">
+            <i data-lucide="activity" class="w-6 h-6 stroke-[2.2]"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xl font-bold tracking-tight text-slate-900">Care<span class="text-brand-600">Flow</span></span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-50 text-brand-700 border border-brand-200">
+                ER v2.4
+              </span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hidden lg:inline-flex">
+                <i data-lucide="database" class="w-2.5 h-2.5 mr-1"></i> Full CRUD Active
+              </span>
+            </div>
+            <p class="text-[11px] font-medium text-slate-500 hidden sm:block">Advanced Emergency Medical Dashboard</p>
+          </div>
+        </div>
+
+        <!-- System Live Status & Navigation Pills -->
+        <div class="hidden md:flex items-center space-x-1 lg:space-x-2 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60 text-xs font-medium">
+          <button id="nav-btn-login" onclick="navigateTo('screen-login')" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center space-x-1.5">
+            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+            <span>Login</span>
+          </button>
+          <button id="nav-btn-intake" onclick="navigateTo('screen-intake')" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center space-x-1.5">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            <span>Intake Type</span>
+          </button>
+          <button id="nav-btn-ambulance" onclick="navigateTo('screen-ambulance')" class="px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center space-x-1.5">
+            <i data-lucide="ambulance" class="w-3.5 h-3.5"></i>
+            <span>Ambulance Entry</span>
+          </button>
+          <button id="nav-btn-triage" onclick="navigateTo('screen-triage')" class="px-3 py-1.5 rounded-lg transition bg-white text-brand-600 font-semibold shadow-xs flex items-center space-x-1.5">
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+            <span>8-Bay Triage Grid</span>
+            <span id="nav-triage-badge" class="ml-1 w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+          </button>
+        </div>
+
+        <!-- Right Side: Attending Doctor Badge & Quick Actions -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <!-- 3-Mode Theme Selector (Light, Dark, Colorblind) -->
+          <div class="flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 text-xs theme-selector-group">
+            <button id="theme-btn-light" onclick="setTheme('light')" title="Light Mode (Standard Clean UI)" class="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-semibold bg-white text-brand-600 shadow-xs cursor-pointer">
+              <i data-lucide="sun" class="w-3.5 h-3.5"></i>
+              <span class="hidden xl:inline text-[11px]">Light</span>
+            </button>
+            <button id="theme-btn-dark" onclick="setTheme('dark')" title="Dark Mode (Night Shift Eye Strain Reduction)" class="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-medium text-slate-600 hover:text-slate-900 cursor-pointer">
+              <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+              <span class="hidden xl:inline text-[11px]">Dark</span>
+            </button>
+            <button id="theme-btn-colorblind" onclick="setTheme('colorblind')" title="Colorblind Mode (High-Contrast & Shapes)" class="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-medium text-slate-600 hover:text-slate-900 cursor-pointer">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              <span class="hidden xl:inline text-[11px]">Colorblind</span>
+            </button>
+          </div>
+
+          <!-- Audio Telemetry Alert Toggle -->
+          <button id="telemetry-sound-toggle" onclick="toggleAudioHeartbeat()" title="Toggle ER Audio Telemetry" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition border border-transparent hover:border-slate-200">
+            <i id="audio-icon" data-lucide="volume-2" class="w-4 h-4 text-brand-600"></i>
+          </button>
+
+          <!-- Current User Profile Pill -->
+          <div id="doctor-profile-badge" class="flex items-center space-x-2.5 pl-2 pr-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-xl hover:bg-slate-100/80 transition cursor-pointer" onclick="navigateTo('screen-login')">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop&crop=faces" alt="Dr. Sarah Chen" class="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200">
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div class="text-left hidden lg:block">
+              <p class="text-xs font-semibold text-slate-800 leading-tight">Dr. Sarah Chen, MD</p>
+              <p class="text-[10px] text-brand-600 font-medium leading-tight">Chief Trauma Lead</p>
+            </div>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT WRAPPER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 1: SECURE LOGIN & PATIENT INTAKE SELECTION                         -->
+    <!-- ========================================================================= -->
+
+    <!-- SUB-SCREEN 1A: LOGIN PAGE (SPLIT-SCREEN ZOMATO-INSPIRED) -->
+    <section id="screen-login" class="screen-view hidden fixed inset-0 z-50 bg-white flex flex-col lg:flex-row overflow-y-auto">
+      
+      <!-- Left Side: Solid Professional Healthcare Blue Branding -->
+      <div class="w-full lg:w-1/2 bg-[#1A56DB] text-white flex flex-col items-center justify-center p-8 sm:p-12 lg:p-16 relative overflow-hidden select-none min-h-[260px] lg:min-h-screen">
+        <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-blue-700/30 blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col items-center text-center max-w-sm">
+          <!-- Medical Shield Icon -->
+          <div class="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-6 text-white shadow-lg shadow-blue-900/20">
+            <i data-lucide="shield-check" class="w-10 h-10 stroke-[2.2]"></i>
+          </div>
+
+          <!-- CareFlow Name & Logo -->
+          <div class="flex items-center space-x-2.5 mb-3">
+            <i data-lucide="activity" class="w-8 h-8 text-blue-200 stroke-[2.5]"></i>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              Care<span class="text-blue-200">Flow</span>
+            </h1>
+          </div>
+
+          <p class="text-blue-100 text-sm font-medium leading-relaxed max-w-xs">
+            Advanced Emergency Medical Ecosystem & Clinical Triage Portal
+          </p>
+
+          <div class="mt-8 inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-blue-100 font-semibold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Authorized Clinical Gateway v2.4</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side: Zomato-Inspired Minimalist Form -->
+      <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 bg-white min-h-[calc(100vh-260px)] lg:min-h-screen">
+        <div class="w-full max-w-md mx-auto">
+          
+          <!-- Heading & Subtitle -->
+          <div class="mb-8">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome to CareFlow
+            </h2>
+            <p class="text-sm text-slate-500 mt-1.5">
+              Secure access to your healthcare workspace
+            </p>
+          </div>
+
+          <!-- Form -->
+          <form id="login-form" onsubmit="handleLoginSubmit(event)" autocomplete="off" class="space-y-5">
+            <!-- 1. Hospital Staff ID or Email -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                Hospital Staff ID or Email
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i data-lucide="mail" class="w-4 h-4"></i>
+                </div>
+                <input type="text" id="login-email" required autocomplete="off" value="dr.sarah.chen@careflow.er" class="w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 transition" placeholder="staff.id@careflow.er">
+              </div>
+            </div>
+
+            <!-- 2. Security Password with Toggle & Forgot Password Link -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Security Password
+                </label>
+                <a href="#" onclick="alert('Authorized Clinical Key: Emergency2026@'); return false;" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition">
+                  Forgot password?
+                </a>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i data-lucide="key-round" class="w-4 h-4"></i>
+                </div>
+                <input type="password" id="login-password" required autocomplete="new-password" value="Emergency2026@" class="w-full pl-10 pr-11 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition" placeholder="••••••••••••">
+                <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer" title="Toggle password visibility">
+                  <i id="password-toggle-icon" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+              <!-- Dynamic Validation Error Alert -->
+              <p id="login-error-msg" class="hidden text-xs text-rose-600 font-semibold mt-2 flex items-center">
+                <i data-lucide="alert-circle" class="w-3.5 h-3.5 mr-1.5 shrink-0"></i>
+                <span id="login-error-text">Invalid security password. Authorized key: Emergency2026@</span>
+              </p>
+            </div>
+
+            <!-- 3. Assigned Shift Role -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                Assigned Shift Role
+              </label>
+              <select id="login-role" class="w-full px-3.5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 transition">
+                <option value="ER Trauma Lead">Dr. Sarah Chen, MD — ER Trauma Lead</option>
+                <option value="Senior Paramedic">Marcus Vance, NREMT-P — Ambulance Unit 8</option>
+                <option value="Triage Charge Nurse">Nurse Elena Rostova, RN — Triage Coordinator</option>
+              </select>
+            </div>
+
+            <!-- 4. Prominent Modern Sign In Button -->
+            <div class="pt-2">
+              <button type="submit" class="w-full py-4 px-4 rounded-xl bg-[#FF5722] hover:bg-[#F4511E] active:scale-[0.99] text-white font-semibold text-sm shadow-md shadow-[#FF5722]/30 transition duration-150 flex items-center justify-center space-x-2 cursor-pointer">
+                <span>Sign In</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </form>
+
+          <!-- Secondary Instant Clinical Demo Access -->
+          <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+            <p class="text-xs text-slate-400 mb-2.5 font-medium">Instant Clinical Demo Access:</p>
+            <div class="flex items-center justify-center space-x-2 text-xs">
+              <button onclick="fillDemoLogin('doc')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">Doctor</button>
+              <button onclick="fillDemoLogin('emt')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">Paramedic</button>
+              <button onclick="fillDemoLogin('nurse')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition cursor-pointer">Nurse</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SUB-SCREEN 1B: ENTRY TYPE SELECTION (Shown after login or via nav) -->
+    <section id="screen-intake" class="screen-view hidden py-8 max-w-4xl mx-auto">
+      
+      <!-- Greeting and Intro -->
+      <div class="text-center max-w-xl mx-auto mb-10">
+        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200 mb-3">
+          <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1.5"></i>
+          Authentication Verified: ER Trauma Portal
+        </div>
+        <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Patient Intake Selection</h2>
+        <p class="text-sm text-slate-500 mt-2">
+          Select intake channel to initiate clinical triaging or stream active paramedic telemetry.
+        </p>
+      </div>
+
+      <!-- Two Distinct Options Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Option 1: Normal Patient Entry -->
+        <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-brand-600 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+              <i data-lucide="user-plus" class="w-7 h-7 stroke-[2]"></i>
+            </div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-bold text-slate-900">Normal Patient Entry</h3>
+              <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Walk-In / Routine</span>
+            </div>
+            <p class="text-sm text-slate-500 mt-3 leading-relaxed">
+              Standard admissions channel for non-immediate emergencies, walk-ins, and doctor referrals. Captures basic identification, chief complaints, and routine registration.
+            </p>
+            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+              <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mr-2"></i> Captures basic demographic & contact data</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mr-2"></i> General triage queue placement</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500 mr-2"></i> Standard clinic billing profile</li>
+            </ul>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-slate-100">
+            <button onclick="openNormalIntakeModal()" class="w-full py-3 px-4 rounded-xl border-2 border-brand-600 text-brand-600 hover:bg-brand-50 active:scale-[0.99] font-semibold text-sm transition flex items-center justify-center space-x-2">
+              <span>Open Normal Intake Form</span>
+              <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 2: Ambulance Entry (Prominent Ambulance Icon) -->
+        <div class="bg-white rounded-2xl p-7 border-2 border-brand-500 shadow-card hover:shadow-card-hover transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+          <!-- Urgent Highlight Banner -->
+          <div class="absolute top-0 right-0 bg-brand-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-xs">
+            High Priority Telemetry
+          </div>
+
+          <div>
+            <!-- Prominent Ambulance Icon -->
+            <div class="w-16 h-16 rounded-2xl bg-brand-600 text-white flex items-center justify-center mb-5 shadow-lg shadow-brand-500/30 group-hover:scale-105 transition-transform">
+              <i data-lucide="ambulance" class="w-9 h-9 stroke-[2.2]"></i>
+            </div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-bold text-slate-900">Ambulance Entry</h3>
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
+                Urgent Telemetry
+              </span>
+            </div>
+            <p class="text-sm text-slate-500 mt-3 leading-relaxed">
+              Field paramedic inbound payload pipeline. Direct sync with dynamic criticality grading, real-time vitals streaming, and emergency equipment allocation.
+            </p>
+            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+              <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 mr-2"></i> Real-time vitals (HR, BP, Glucose, Temp)</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 mr-2"></i> Dynamic Criticality Bar (High / Mid / Zero)</li>
+              <li class="flex items-center"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 mr-2"></i> Instant insertion into ER 8-Bay Split Grid</li>
+            </ul>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-slate-100">
+            <button onclick="navigateTo('screen-ambulance')" class="w-full py-3.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold text-sm shadow-md shadow-brand-600/25 transition flex items-center justify-center space-x-2">
+              <i data-lucide="radio" class="w-4 h-4 animate-pulse"></i>
+              <span>Launch Ambulance Data Entry</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Back to Dashboard -->
+      <div class="mt-8 text-center">
+        <button onclick="navigateTo('screen-triage')" class="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-brand-600 transition">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5 mr-1.5"></i>
+          Skip to Main ER Triage Dashboard (8-Screen Grid)
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 2: AMBULANCE DATA ENTRY FORM                                       -->
+    <!-- ========================================================================= -->
+
+    <section id="screen-ambulance" class="screen-view hidden py-4 max-w-3xl mx-auto">
+      
+      <!-- Top Bar / Breadcrumb -->
+      <div class="flex items-center justify-between mb-6">
+        <button onclick="navigateTo('screen-intake')" class="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5 mr-1.5"></i>
+          Back to Intake Selection
+        </button>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
+          <i data-lucide="signal" class="w-3 h-3 mr-1 text-emerald-500 animate-pulse"></i>
+          Ambulance Telemetry Hub Active
+        </span>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-card border border-slate-200/80 p-6 sm:p-8">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-slate-100 gap-4">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-md shadow-brand-500/20">
+              <i data-lucide="ambulance" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 tracking-tight">Ambulance Data Entry Form</h2>
+              <p class="text-xs text-slate-500">Live Paramedic Field Stream & Criticality Grading</p>
+            </div>
+          </div>
+          <!-- Auto-fill sample button for quick demonstration -->
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="loadSampleAmbulanceCase('high')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition">
+              Sample: High
+            </button>
+            <button type="button" onclick="loadSampleAmbulanceCase('middle')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition">
+              Sample: Mid
+            </button>
+            <button type="button" onclick="loadSampleAmbulanceCase('zero')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">
+              Sample: Zero
+            </button>
+          </div>
+        </div>
+
+        <!-- The Pristine Form with Rounded Input Fields -->
+        <form id="ambulance-data-form" onsubmit="handleAmbulanceFormSubmit(event)" class="space-y-6">
+
+          <!-- Patient Core Identification -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Patient / Case ID <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input type="text" id="amb-patient-id" required value="AMB-9048" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="AMB-XXXX">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Patient Full Name
+              </label>
+              <input type="text" id="amb-patient-name" value="Julian Ramirez" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="Full name">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Age & Gender
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="amb-patient-age" value="52" min="1" max="115" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="Age">
+                <select id="amb-patient-gender" class="w-full px-2 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pristine Vitals Inputs -->
+          <div class="bg-slate-50/70 p-5 rounded-2xl border border-slate-200/70 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
+                <i data-lucide="activity" class="w-4 h-4 text-brand-600"></i>
+                <span>Real-Time Physiological Vitals</span>
+              </h3>
+              <span class="text-[11px] text-slate-400">Values dynamically tune Criticality Bar</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              <!-- Heart Rate -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
+                  Heart Rate (BPM)
+                </label>
+                <div class="relative">
+                  <input type="number" id="amb-vital-hr" value="134" oninput="evaluateCriticality()" class="w-full pl-3.5 pr-12 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="75">
+                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-slate-400 pointer-events-none">bpm</span>
+                </div>
+              </div>
+
+              <!-- Temperature -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
+                  Temperature (°F)
+                </label>
+                <div class="relative">
+                  <input type="number" step="0.1" id="amb-vital-temp" value="101.4" oninput="evaluateCriticality()" class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="98.6">
+                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-slate-400 pointer-events-none">°F</span>
+                </div>
+              </div>
+
+              <!-- Sugar Level -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
+                  Sugar Level (mg/dL)
+                </label>
+                <div class="relative">
+                  <input type="number" id="amb-vital-sugar" value="230" oninput="evaluateCriticality()" class="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="110">
+                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-slate-400 pointer-events-none">mg/dL</span>
+                </div>
+              </div>
+
+              <!-- Blood Pressure -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
+                  Blood Pressure (BP)
+                </label>
+                <div class="relative">
+                  <input type="text" id="amb-vital-bp" value="175/105" oninput="evaluateCriticality()" class="w-full pl-3.5 pr-14 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="120/80">
+                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-medium text-slate-400 pointer-events-none">mmHg</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Medical Equipment Currently Being Used in Ambulance -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                Medical Equipment in Active Use
+              </label>
+              <span class="text-xs text-brand-600 font-medium">Select all active devices</span>
+            </div>
+
+            <!-- Equipment Multi-select Chips -->
+            <div id="equipment-chips" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <!-- Dynamically populated or styled tags -->
+              <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-brand-400 cursor-pointer transition select-none has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="equipment" value="Defibrillator (AED)" checked onchange="evaluateCriticality()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                <span class="text-xs font-medium text-slate-800">Defibrillator (AED)</span>
+              </label>
+
+              <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-brand-400 cursor-pointer transition select-none has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="equipment" value="Portable Ventilator" checked onchange="evaluateCriticality()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                <span class="text-xs font-medium text-slate-800">Portable Ventilator</span>
+              </label>
+
+              <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-brand-400 cursor-pointer transition select-none has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="equipment" value="12-Lead ECG Telemetry" checked onchange="evaluateCriticality()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                <span class="text-xs font-medium text-slate-800">12-Lead ECG Monitor</span>
+              </label>
+
+              <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-brand-400 cursor-pointer transition select-none has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="equipment" value="IV Infusion Pump" onchange="evaluateCriticality()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                <span class="text-xs font-medium text-slate-800">IV Infusion Pump</span>
+              </label>
+
+              <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-brand-400 cursor-pointer transition select-none has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="equipment" value="Oxygen Concentrator" checked onchange="evaluateCriticality()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                <span class="text-xs font-medium text-slate-800">Oxygen Concentrator</span>
+              </label>
+
+              <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 bg-white hover:border-brand-400 cursor-pointer transition select-none has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/50">
+                <input type="checkbox" name="equipment" value="Suction Unit" onchange="evaluateCriticality()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                <span class="text-xs font-medium text-slate-800">Suction Unit</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- ============================================================= -->
+          <!-- DYNAMIC CRITICALITY BAR (HIGH, MIDDLE, ZERO)                   -->
+          <!-- ============================================================= -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-subtle space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Dynamic Criticality Bar</span>
+                <p class="text-[11px] text-slate-500">Live clinical assessment of patient stability</p>
+              </div>
+              <!-- Current State Badge -->
+              <div id="criticality-badge-container">
+                <span id="criticality-status-pill" class="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase badge-high flex items-center space-x-1.5">
+                  <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                  <span id="criticality-pill-text">High Severity</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- The Visual Bar Progress Container with 3 Segments -->
+            <div class="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/80">
+              <div id="criticality-bar-fill" class="h-full rounded-full transition-all duration-500 w-[95%] bg-red-500 shadow-sm shadow-red-500/50"></div>
+            </div>
+
+            <!-- 3 State Interactive Buttons / Selectors -->
+            <div class="grid grid-cols-3 gap-2.5 pt-1">
+              <!-- High Button -->
+              <button type="button" onclick="setCriticalityOverride('High')" id="crit-btn-high" class="p-3 rounded-xl border-2 border-red-500 bg-red-50/60 text-left transition hover:bg-red-100/50">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-red-700">High</span>
+                  <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-600"></i>
+                </div>
+                <p class="text-[10px] text-red-600/90 leading-tight">Patient suffering critical condition</p>
+              </button>
+
+              <!-- Middle Button -->
+              <button type="button" onclick="setCriticalityOverride('Middle')" id="crit-btn-middle" class="p-3 rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:bg-amber-50 hover:border-amber-400">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-slate-700">Middle</span>
+                  <i data-lucide="activity" class="w-3.5 h-3.5 text-amber-500"></i>
+                </div>
+                <p class="text-[10px] text-slate-500 leading-tight">Condition normal & okay / stable</p>
+              </button>
+
+              <!-- Zero Button -->
+              <button type="button" onclick="setCriticalityOverride('Zero')" id="crit-btn-zero" class="p-3 rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:bg-emerald-50 hover:border-emerald-400">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-slate-700">Zero</span>
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
+                </div>
+                <p class="text-[10px] text-slate-500 leading-tight">Can be cured in ambulance</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hidden Input for selected Criticality -->
+          <input type="hidden" id="amb-criticality-value" value="High">
+
+          <!-- Chief Clinical Notes -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              EMT Field Clinical Notes & Condition
+            </label>
+            <textarea id="amb-clinical-notes" rows="2" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="e.g. Acute chest discomfort radiating to left arm, diaphoretic, SpO2 dropping to 88%...">Acute chest pain radiating to left jaw, diaphoresis. ST-elevation suspected on Lead II.</textarea>
+          </div>
+
+          <!-- Transmit Button (Wide Blue Primary Button) -->
+          <div class="pt-2">
+            <button type="submit" class="w-full py-4 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold text-sm shadow-md shadow-brand-600/30 transition duration-150 flex items-center justify-center space-x-2">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>Transmit & Auto-Rank into ER Triage (8-Bay Grid)</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 3: MAIN ER TRIAGE DASHBOARD (THE 8-SCREEN SPLIT)                   -->
+    <!-- ========================================================================= -->
+
+    <section id="screen-triage" class="screen-view py-2">
+      
+      <!-- Top Action & Analytics Bar -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-subtle mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        
+        <div>
+          <div class="flex items-center space-x-2.5">
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Main ER Triage Dashboard</h1>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 flex items-center space-x-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>8-Screen Split Active</span>
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Real-time automated ranking: <span class="font-semibold text-red-600">High Urgency (Top Panels)</span> &rarr; <span class="font-semibold text-amber-600">Middle Urgency</span> &rarr; <span class="font-semibold text-emerald-600">Zero (Bottom Panels)</span>
+          </p>
+        </div>
+
+        <!-- Dashboard Controls: Filter, Search, Quick Intake -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          
+          <!-- Live Search -->
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="triage-search-input" oninput="render8ScreenTriage()" placeholder="Filter patient or ID..." class="pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition w-44">
+          </div>
+
+          <!-- Sort Filter Pill (Shows active auto-sort) -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600">
+            <button onclick="setTriageFilter('all')" id="filter-pill-all" class="px-2.5 py-1 rounded-lg bg-white text-brand-600 shadow-xs">All 8 Bays</button>
+            <button onclick="setTriageFilter('High')" id="filter-pill-high" class="px-2.5 py-1 rounded-lg hover:text-red-600">▲ High</button>
+            <button onclick="setTriageFilter('Middle')" id="filter-pill-middle" class="px-2.5 py-1 rounded-lg hover:text-amber-600">● Middle</button>
+            <button onclick="setTriageFilter('Zero')" id="filter-pill-zero" class="px-2.5 py-1 rounded-lg hover:text-emerald-600">■ Zero</button>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <button onclick="navigateTo('screen-ambulance')" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Add Ambulance Case</span>
+          </button>
+          <button onclick="simulateTelemetryPing()" title="Simulate incoming vitals spike" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-600"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Quick Triage Metric Stat Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-subtle flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+            <i data-lucide="flame" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span>▲</span> High Critical</p>
+            <div class="flex items-baseline space-x-1.5">
+              <span id="metric-high-count" class="text-xl font-extrabold text-slate-900">3</span>
+              <span class="text-[10px] text-red-600 font-semibold">Immediate Care</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-subtle flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+            <i data-lucide="clock" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span>●</span> Middle Urgency</p>
+            <div class="flex items-baseline space-x-1.5">
+              <span id="metric-mid-count" class="text-xl font-extrabold text-slate-900">3</span>
+              <span class="text-[10px] text-amber-600 font-semibold">Stable / Monitored</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-subtle flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+            <i data-lucide="check-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"><span>■</span> Zero (Field Cure)</p>
+            <div class="flex items-baseline space-x-1.5">
+              <span id="metric-zero-count" class="text-xl font-extrabold text-slate-900">2</span>
+              <span class="text-[10px] text-emerald-600 font-semibold">Paramedic Treat</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-subtle flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-sm">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Bays Occupied</p>
+            <div class="flex items-baseline space-x-1.5">
+              <span id="metric-total-count" class="text-xl font-extrabold text-slate-900">8 / 8</span>
+              <span class="text-[10px] text-brand-600 font-semibold">100% Monitored</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- THE 8-SCREEN GRID CONTAINER                                          -->
+      <!-- Modern rounded profile cards, white background, subtle drop shadows  -->
+      <!-- Auto-sorted: High top -> Middle -> Zero bottom                       -->
+      <!-- =================================================================== -->
+      <div id="triage-8-screen-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Rendered dynamically by JavaScript with full realism -->
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 4: DETAILED PATIENT HISTORY (CLICK-THROUGH VIEW)                   -->
+    <!-- & SCREEN 5: TREATMENT & BILLING MODULE                                    -->
+    <!-- ========================================================================= -->
+
+    <section id="screen-patient-detail" class="screen-view hidden py-4 max-w-5xl mx-auto">
+      
+      <!-- Top Breadcrumb & Action Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-slate-200 gap-3">
+        <button onclick="navigateTo('screen-triage')" class="inline-flex items-center text-sm font-semibold text-brand-600 hover:text-brand-800 transition">
+          <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i>
+          Back to 8-Screen ER Triage Dashboard
+        </button>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="detail-triage-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider badge-high flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+            <span id="detail-severity-label">HIGH URGENCY</span>
+          </span>
+          <button onclick="openUpdatePatientModal(AppState.activePatientDetail?.id)" class="px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-semibold border border-brand-200 transition flex items-center space-x-1.5 shadow-2xs">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>Update Vitals (PUT)</span>
+          </button>
+          <button onclick="openDischargeModal(AppState.activePatientDetail?.id)" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200 transition flex items-center space-x-1.5 shadow-2xs">
+            <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
+            <span>Discharge Patient (DELETE)</span>
+          </button>
+          <button onclick="printPatientSuperbill()" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-semibold text-slate-700 transition flex items-center space-x-1.5">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>Print Chart</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Profile Card Container -->
+      <div class="space-y-6">
+
+        <!-- 4.1 Profile Layout: Avatar at the Top & Demographics -->
+        <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-card">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            
+            <div class="flex items-center space-x-5">
+              <!-- Patient Avatar -->
+              <div class="relative">
+                <img id="detail-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=faces" alt="Patient Avatar" class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-slate-100 shadow-md">
+                <span id="detail-avatar-status-dot" class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-red-500 border-2 border-white flex items-center justify-center text-white text-[9px] font-bold">!</span>
+              </div>
+
+              <!-- Name & Core Info -->
+              <div>
+                <div class="flex items-center space-x-3">
+                  <h2 id="detail-patient-name" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Marcus Sterling</h2>
+                  <span id="detail-blood-group" class="px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">O+ Positive</span>
+                </div>
+                <p id="detail-demographics" class="text-xs text-slate-500 mt-1">
+                  Age: 58 &bull; Male &bull; MRN: CF-781923 &bull; Bay Assigned: <span id="detail-bay-num" class="font-bold text-slate-800">BAY-01 (Priority Bay)</span>
+                </p>
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
+                    <i data-lucide="phone" class="w-3 h-3 mr-1 text-slate-400"></i>
+                    <span id="detail-contact">+1 (555) 382-9014 (Spouse: Eleanor)</span>
+                  </span>
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-50 text-brand-700">
+                    <i data-lucide="user-check" class="w-3 h-3 mr-1 text-brand-500"></i>
+                    Attending: Dr. Sarah Chen, MD
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Current Telemetry Strip -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 w-full sm:w-auto min-w-[240px]">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Live Vital Telemetry</span>
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span class="text-slate-500 block text-[10px]">Heart Rate</span>
+                  <span id="detail-vital-hr" class="text-base font-bold text-red-600">138 bpm</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block text-[10px]">Blood Pressure</span>
+                  <span id="detail-vital-bp" class="text-base font-bold text-slate-900">185/110</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block text-[10px]">Glucose Level</span>
+                  <span id="detail-vital-sugar" class="text-base font-bold text-slate-900">210 mg/dL</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block text-[10px]">Body Temp</span>
+                  <span id="detail-vital-temp" class="text-base font-bold text-slate-900">99.4 °F</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 4.2 Medical History: Highly organized, spaced-out list containing 4 sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Section 1: Previous hospital data and past admissions -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-subtle space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-brand-600 flex items-center justify-center">
+                  <i data-lucide="building-2" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Previous Hospital Data & Past Admissions</h3>
+              </div>
+              <span class="text-xs font-semibold text-slate-400">Electronic Health Record</span>
+            </div>
+
+            <div id="detail-past-admissions" class="space-y-3">
+              <!-- Dynamically populated past hospital records -->
+            </div>
+          </div>
+
+          <!-- Section 2: Recent blood checkups and lab results -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-subtle space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <i data-lucide="test-tube-2" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Recent Blood Checkups & Lab Results</h3>
+              </div>
+              <span class="text-xs font-semibold text-slate-400">Validated 14m ago</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-left text-slate-400 uppercase text-[10px] border-b border-slate-100">
+                    <th class="pb-2 font-semibold">Test Parameter</th>
+                    <th class="pb-2 font-semibold">Observed</th>
+                    <th class="pb-2 font-semibold">Reference</th>
+                    <th class="pb-2 font-semibold text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="detail-lab-results" class="divide-y divide-slate-50 font-medium">
+                  <!-- Dynamically populated lab rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 3: Known health issues -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-subtle space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Known Health Issues & Chronic History</h3>
+              </div>
+              <span class="text-xs font-semibold text-slate-400">Clinical Alerts</span>
+            </div>
+
+            <div id="detail-health-issues" class="space-y-3">
+              <!-- Dynamically populated health issues and allergies -->
+            </div>
+          </div>
+
+          <!-- Section 4: Monthly subscriptions and active health insurance policies -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-subtle space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <i data-lucide="badge-percent" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Insurance & Active Health Subscriptions</h3>
+              </div>
+              <span class="inline-flex items-center text-xs font-semibold text-emerald-600">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1"></i> Verified Active
+              </span>
+            </div>
+
+            <div id="detail-insurance-info" class="space-y-3">
+              <!-- Dynamically populated insurance & subscription cards -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- SCREEN 5: TREATMENT & BILLING MODULE                                      -->
+        <!-- At the bottom of patient detail screen, mirroring a clean checkout screen  -->
+        <!-- ========================================================================= -->
+
+        <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-card">
+          
+          <!-- Header mirroring clean checkout -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-6 border-b border-slate-100 gap-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+                <i data-lucide="receipt" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 tracking-tight">Treatment & Billing Module</h3>
+                <p class="text-xs text-slate-500">Itemized Care Estimation & Insurance Pre-Authorization</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2 text-xs">
+              <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 flex items-center">
+                <i data-lucide="check" class="w-3 h-3 mr-1"></i> In-Network Pre-Approval
+              </span>
+              <span class="text-slate-400">Invoice: #CF-2026-INV89</span>
+            </div>
+          </div>
+
+          <!-- Itemized Breakdown Grid (Checkout Style) -->
+          <div class="space-y-3">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between pb-2 border-b border-slate-100">
+              <span>Itemized Treatment & Emergency Service</span>
+              <span>Amount (INR ₹)</span>
+            </div>
+
+            <!-- Dynamic Line Items -->
+            <div id="billing-items-container" class="space-y-2.5 text-sm">
+              <!-- Dynamically injected itemized lines -->
+            </div>
+
+            <!-- Subtle Dividers & Summary Calculations -->
+            <div class="pt-4 border-t border-slate-200/80 space-y-2 text-sm">
+              <div class="flex justify-between text-slate-500">
+                <span>Subtotal Estimated Clinical Charges</span>
+                <span id="bill-subtotal" class="font-semibold text-slate-800">₹48,500.00</span>
+              </div>
+              <div class="flex justify-between text-emerald-600">
+                <span class="flex items-center">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1.5"></i>
+                  <span id="bill-insurance-name">CareShield Health Coverage (80%)</span>
+                </span>
+                <span id="bill-insurance-deductible" class="font-semibold">-₹38,800.00</span>
+              </div>
+              <div class="flex justify-between text-slate-500">
+                <span>Hospital Facility Copay & Surcharge</span>
+                <span id="bill-copay" class="font-semibold text-slate-800">₹500.00</span>
+              </div>
+
+              <!-- Total Checkout Bar -->
+              <div class="pt-3 mt-2 border-t-2 border-slate-100 flex items-baseline justify-between">
+                <div>
+                  <span class="text-base font-extrabold text-slate-900 block">Estimated Amount Required</span>
+                  <span class="text-[11px] text-slate-400">Patient responsibility / Co-insurance balance</span>
+                </div>
+                <div class="text-right">
+                  <span id="bill-final-total" class="text-2xl sm:text-3xl font-extrabold text-brand-600 tracking-tight">₹10,200.00</span>
+                  <span class="text-[10px] text-slate-400 block">INR (₹)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Checkout Bar -->
+            <div class="pt-6 mt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex items-center space-x-2 text-xs text-slate-500">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i>
+                <span>HIPAA Encrypted Billing & Instant Clinical Claims Bridge</span>
+              </div>
+
+              <div class="flex items-center space-x-3 w-full sm:w-auto">
+                <button onclick="approveTreatmentPlan()" class="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold text-xs shadow-md shadow-brand-600/25 transition flex items-center justify-center space-x-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                  <span>Approve Treatment Plan & Authorize</span>
+                </button>
+                <button onclick="printPatientSuperbill()" class="px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center justify-center">
+                  <i data-lucide="download" class="w-4 h-4 mr-1"></i>
+                  <span>Export</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: NORMAL PATIENT ENTRY MODAL ================= -->
+  <div id="modal-normal-entry" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-modal border border-slate-200 max-w-lg w-full p-6 sm:p-7 relative max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+            <i data-lucide="user-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Normal Patient Entry</h3>
+            <p class="text-xs text-slate-500">Walk-in intake (basic patient details only)</p>
+          </div>
+        </div>
+        <button onclick="closeNormalIntakeModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleNormalEntrySubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Patient Full Name <span class="text-red-500">*</span></label>
+          <input type="text" id="normal-name" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="e.g. Margaret Taylor">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Age</label>
+            <input type="number" id="normal-age" required value="32" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Gender</label>
+            <select id="normal-gender" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Emergency Contact Number</label>
+          <input type="tel" id="normal-phone" value="+1 (555) 294-8190" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Primary Reason for Visit / Chief Complaint</label>
+          <textarea id="normal-complaint" rows="2" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition" placeholder="e.g. Mild sprain, fever since yesterday, prescription refill..."></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeNormalIntakeModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-sm transition">Enroll Normal Patient</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: UPDATE PATIENT VITALS & STATUS (CRUD: UPDATE) ================= -->
+  <div id="modal-update-patient" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-modal border border-slate-200 max-w-lg w-full p-6 sm:p-7 relative max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
+            <i data-lucide="edit-3" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Update Patient & Vitals</h3>
+            <p class="text-xs text-slate-500">CRUD Update: modify vitals & re-grade triage severity</p>
+          </div>
+        </div>
+        <button onclick="closeUpdatePatientModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleUpdatePatientSubmit(event)" class="space-y-4">
+        <input type="hidden" id="update-patient-id">
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px]">Patient</span>
+            <span id="update-patient-name-display" class="font-bold text-slate-900">Marcus Sterling</span>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-400 block text-[10px]">MRN / ID</span>
+            <span id="update-patient-id-display" class="font-mono font-semibold text-brand-600">AMB-8012</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Criticality Level (Re-ranks 8-Bay Grid)</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-red-400 cursor-pointer text-center select-none has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+              <input type="radio" name="update-severity" value="High" class="sr-only">
+              <span class="text-xs font-bold text-red-600 block">High</span>
+              <span class="text-[9px] text-slate-400">Critical</span>
+            </label>
+            <label class="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-amber-400 cursor-pointer text-center select-none has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50">
+              <input type="radio" name="update-severity" value="Middle" class="sr-only">
+              <span class="text-xs font-bold text-amber-600 block">Middle</span>
+              <span class="text-[9px] text-slate-400">Stable</span>
+            </label>
+            <label class="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 cursor-pointer text-center select-none has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+              <input type="radio" name="update-severity" value="Zero" class="sr-only">
+              <span class="text-xs font-bold text-emerald-600 block">Zero</span>
+              <span class="text-[9px] text-slate-400">Curable</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Heart Rate (BPM)</label>
+            <input type="number" id="update-hr" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Blood Pressure (BP)</label>
+            <input type="text" id="update-bp" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Blood Glucose (mg/dL)</label>
+            <input type="number" id="update-sugar" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Body Temp (°F)</label>
+            <input type="number" step="0.1" id="update-temp" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Updated Clinical Notes / Status</label>
+          <textarea id="update-notes" rows="2" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-600 transition"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-3">
+          <button type="button" onclick="closeUpdatePatientModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save & Re-Rank Triage (PUT)</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CONFIRM DISCHARGE (CRUD: DELETE) ================= -->
+  <div id="modal-confirm-discharge" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-modal border border-slate-200 max-w-md w-full p-6 sm:p-7 relative">
+      
+      <div class="text-center mb-5">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+          <i data-lucide="user-minus" class="w-6 h-6 stroke-[2]"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">Discharge Patient & Free Bay</h3>
+        <p class="text-xs text-slate-500 mt-1">This executes a CRUD <strong>DELETE</strong> operation, discharging the patient from active ER triage.</p>
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs mb-5">
+        <p class="text-slate-500">Patient to discharge:</p>
+        <p id="discharge-patient-name" class="font-bold text-slate-900 text-sm mt-0.5">Marcus Sterling</p>
+        <p id="discharge-patient-bay" class="text-[11px] text-slate-500">Assigned: BAY-01 (Priority Bay)</p>
+      </div>
+
+      <input type="hidden" id="discharge-patient-id">
+
+      <div class="flex items-center justify-end space-x-3">
+        <button type="button" onclick="closeDischargeModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition">Cancel</button>
+        <button type="button" onclick="handleConfirmDischarge()" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Confirm Discharge (DELETE)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- ================= JAVASCRIPT STATE ENGINE ================= -->
+  <script>
+    // Master CareFlow State
+    const AppState = {
+      currentView: 'screen-triage', // default view: 8-screen triage
+      currentUser: {
+        name: 'Dr. Sarah Chen, MD',
+        role: 'Chief ER Trauma Lead',
+        id: 'MED-7721'
+      },
+      currentTriageFilter: 'all',
+      activePatientDetail: null,
+      audioHeartbeat: true,
+      theme: localStorage.getItem('careflow_theme') || 'light',
+
+      // Initial 8 Triage Patients pre-sorted by Emergency Level:
+      // High (1, 2, 3) -> Middle (4, 5, 6) -> Zero (7, 8)
+      patients: [
+        {
+          id: 'AMB-8012',
+          mrn: 'CF-90142',
+          name: 'Marcus Sterling',
+          age: 58,
+          gender: 'Male',
+          blood: 'O+',
+          bay: 'BAY-01 (Priority Bay)',
+          arrival: '2m ago',
+          condition: 'Acute STEMI / Cardiogenic Shock',
+          severity: 'High', // High, Middle, Zero
+          severityScore: 98,
+          admissionStatus: 'Approved',
+          vitals: { hr: 138, bp: '185/110', sugar: 210, temp: 99.4, spo2: 88 },
+          equipment: ['Defibrillator (AED)', '12-Lead ECG Monitor', 'Oxygen Concentrator'],
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 382-9014 (Spouse: Eleanor)',
+          admissions: [
+            { date: 'Oct 2023', hospital: 'St. Jude Cardiac Center', reason: 'Emergency Angioplasty & Stent Placement', physician: 'Dr. K. Vance' },
+            { date: 'Feb 2021', hospital: 'CareFlow General Hospital', reason: 'Unstable Angina & Telemetry Monitoring', physician: 'Dr. L. Myers' }
+          ],
+          labs: [
+            { test: 'Troponin I', value: '2.40 ng/mL', ref: '0.00 - 0.04 ng/mL', status: 'CRITICAL', isAlert: true },
+            { test: 'Serum Potassium', value: '5.4 mEq/L', ref: '3.5 - 5.0 mEq/L', status: 'ELEVATED', isAlert: true },
+            { test: 'Blood Glucose', value: '210 mg/dL', ref: '70 - 99 mg/dL', status: 'ELEVATED', isAlert: true },
+            { test: 'WBC Count', value: '11.8 K/uL', ref: '4.5 - 11.0 K/uL', status: 'SLIGHT HIGH', isAlert: false }
+          ],
+          healthIssues: [
+            { title: 'Coronary Artery Disease (CAD)', type: 'Chronic', desc: 'Prior DES stent in LAD (2023)' },
+            { title: 'Hypertension (Stage 2)', type: 'Chronic', desc: 'Prescribed Lisinopril 20mg daily' },
+            { title: 'Allergy: Penicillin & Cephalosporins', type: 'Allergy', desc: 'Anaphylaxis risk — flagged high priority' }
+          ],
+          insurance: {
+            carrier: 'CareShield Health Platinum Elite',
+            policyId: 'CS-89240192',
+            groupNum: 'GRP-994',
+            coveragePercent: 80,
+            subscription: 'CareFlow TeleHealth Care Concierge ($49/mo - Active)'
+          },
+          billing: [
+            { item: 'Emergency ALS Paramedic Transit & Dispatch', code: 'A0427', cost: 650.00 },
+            { item: 'Level 5 ER Trauma Resuscitation Bay Care', code: '99285', cost: 1850.00 },
+            { item: 'Emergency 12-Lead Continuous ECG Telemetry', code: '93005', cost: 380.00 },
+            { item: 'Emergency Cardiac Catheterization Activation', code: '93458', cost: 1420.00 },
+            { item: 'IV Thrombolytics & Continuous Oxygen Supply', code: 'J3490', cost: 550.00 }
+          ]
+        },
+        {
+          id: 'AMB-8015',
+          mrn: 'CF-84419',
+          name: 'Elena Rostova',
+          age: 34,
+          gender: 'Female',
+          blood: 'A-',
+          bay: 'BAY-02 (Trauma Bay)',
+          arrival: '6m ago',
+          condition: 'Severe Polytrauma & Hemorrhagic Shock',
+          severity: 'High',
+          severityScore: 94,
+          admissionStatus: 'Approved',
+          vitals: { hr: 128, bp: '85/55', sugar: 115, temp: 97.2, spo2: 91 },
+          equipment: ['Cervical Collar', 'IV Infusion Pump', 'Suction Unit'],
+          avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 714-3329 (Father: Mikhail)',
+          admissions: [
+            { date: 'Jun 2019', hospital: 'Metro Trauma Center', reason: 'Laparoscopic Appendectomy', physician: 'Dr. R. Alvarez' }
+          ],
+          labs: [
+            { test: 'Hemoglobin (Hgb)', value: '8.1 g/dL', ref: '12.0 - 16.0 g/dL', status: 'CRITICAL LOW', isAlert: true },
+            { test: 'Hematocrit (Hct)', value: '25.4 %', ref: '37.0 - 48.0 %', status: 'CRITICAL LOW', isAlert: true },
+            { test: 'Lactate, Blood', value: '4.2 mmol/L', ref: '0.5 - 2.0 mmol/L', status: 'HIGH SHOCK', isAlert: true }
+          ],
+          healthIssues: [
+            { title: 'Severe Latex Allergy', type: 'Allergy', desc: 'Use non-latex medical gloves & catheters only' },
+            { title: 'Mild Exercise-Induced Asthma', type: 'Respiratory', desc: 'Albuterol inhaler PRN' }
+          ],
+          insurance: {
+            carrier: 'BlueCross Prime Premier PPO',
+            policyId: 'BC-5541092',
+            groupNum: 'GRP-308',
+            coveragePercent: 85,
+            subscription: 'BlueCross Vital Wellness Care ($35/mo - Active)'
+          },
+          billing: [
+            { item: 'ALS Trauma Emergency Ambulance Response', code: 'A0427', cost: 700.00 },
+            { item: 'Trauma Team Level 1 Rapid Activation', code: '99285-TG', cost: 2100.00 },
+            { item: 'Whole Blood Transfusion (2 Units Emergency O-)', code: 'P9021', cost: 1100.00 },
+            { item: 'Immediate Whole Body Trauma Pan-Scan CT', code: '74178', cost: 980.00 },
+            { item: 'Spinal Immobility Orthopedic Kit & IV Access', code: 'A4550', cost: 360.00 }
+          ]
+        },
+        {
+          id: 'AMB-8019',
+          mrn: 'CF-76231',
+          name: 'Arthur Pendelton',
+          age: 72,
+          gender: 'Male',
+          blood: 'B+',
+          bay: 'BAY-03 (Respiratory Bay)',
+          arrival: '11m ago',
+          condition: 'Acute ARDS & Severe COPD Exacerbation',
+          severity: 'High',
+          severityScore: 90,
+          admissionStatus: 'Approved',
+          vitals: { hr: 118, bp: '160/98', sugar: 180, temp: 102.1, spo2: 86 },
+          equipment: ['Portable Ventilator', 'Nebulizer Kit', 'Oxygen Concentrator'],
+          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 891-2309 (Daughter: Claire)',
+          admissions: [
+            { date: 'Jan 2024', hospital: 'CareFlow Pulmonary Pavilion', reason: 'Bacterial Pneumonia Admission', physician: 'Dr. W. Foster' },
+            { date: 'Nov 2022', hospital: 'Valley Health Center', reason: 'COPD Exacerbation with BiPAP', physician: 'Dr. S. Thorne' }
+          ],
+          labs: [
+            { test: 'PaO2 (Arterial Gas)', value: '56 mmHg', ref: '75 - 100 mmHg', status: 'CRITICAL HYPOXIC', isAlert: true },
+            { test: 'PaCO2 (Arterial Gas)', value: '58 mmHg', ref: '35 - 45 mmHg', status: 'ELEVATED', isAlert: true },
+            { test: 'White Blood Cell (WBC)', value: '16.4 K/uL', ref: '4.5 - 11.0 K/uL', status: 'ELEVATED INFECTION', isAlert: true }
+          ],
+          healthIssues: [
+            { title: 'Chronic Obstructive Pulmonary Disease (Stage 4)', type: 'Pulmonary', desc: 'Home oxygen dependent 2L/min' },
+            { title: 'Congestive Heart Failure (NYHA Class II)', type: 'Cardiac', desc: 'Takes Furosemide 40mg PO BID' },
+            { title: 'Sulfa Drug Allergy', type: 'Allergy', desc: 'Skin rash & hives' }
+          ],
+          insurance: {
+            carrier: 'Medicare Advantage Prime Complete',
+            policyId: 'MED-908124',
+            groupNum: 'GRP-MED1',
+            coveragePercent: 80,
+            subscription: 'Senior CareLink Chronic Monitoring ($25/mo - Active)'
+          },
+          billing: [
+            { item: 'ALS Emergency Paramedic Transit', code: 'A0427', cost: 600.00 },
+            { item: 'Emergency Endotracheal & Mechanical Ventilation', code: '94002', cost: 1450.00 },
+            { item: 'Arterial Blood Gas Lab Analysis Panel', code: '82803', cost: 280.00 },
+            { item: 'Emergency IV Corticosteroids & Bronchodilators', code: 'J1040', cost: 420.00 },
+            { item: 'High-Flow Continuous Oxygen Support Bay', code: 'A4615', cost: 450.00 }
+          ]
+        },
+        {
+          id: 'AMB-8022',
+          mrn: 'CF-65209',
+          name: 'Sophia Lin',
+          age: 28,
+          gender: 'Female',
+          blood: 'O-',
+          bay: 'BAY-04 (Observation Bay)',
+          arrival: '18m ago',
+          condition: 'Acute Abdominal Pain (Suspected Appendicitis)',
+          severity: 'Middle',
+          severityScore: 68,
+          admissionStatus: 'Approved',
+          vitals: { hr: 92, bp: '124/82', sugar: 104, temp: 100.8, spo2: 98 },
+          equipment: ['IV Infusion Pump', 'Monitoring Sensors'],
+          avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 412-8921 (Brother: Kevin)',
+          admissions: [
+            { date: 'Aug 2021', hospital: 'CareFlow General Hospital', reason: 'Elective Knee Arthroscopy', physician: 'Dr. M. Zhao' }
+          ],
+          labs: [
+            { test: 'WBC Count', value: '14.2 K/uL', ref: '4.5 - 11.0 K/uL', status: 'ELEVATED', isAlert: true },
+            { test: 'C-Reactive Protein (CRP)', value: '38 mg/L', ref: '< 3.0 mg/L', status: 'INFLAMED', isAlert: true },
+            { test: 'Serum Creatinine', value: '0.8 mg/dL', ref: '0.6 - 1.1 mg/dL', status: 'NORMAL', isAlert: false }
+          ],
+          healthIssues: [
+            { title: 'Mild Intermittent Asthma', type: 'Respiratory', desc: 'Controlled, no recent attacks' },
+            { title: 'No Known Drug Allergies (NKDA)', type: 'Status', desc: 'Confirmed by patient' }
+          ],
+          insurance: {
+            carrier: 'Aetna Health Choice POS',
+            policyId: 'AET-771923',
+            groupNum: 'GRP-441',
+            coveragePercent: 80,
+            subscription: 'Aetna Wellness Rewards ($20/mo - Active)'
+          },
+          billing: [
+            { item: 'Basic Paramedic Rapid Response & Triage', code: 'A0426', cost: 450.00 },
+            { item: 'Emergency Abdominal Contrast CT Scan', code: '74160', cost: 890.00 },
+            { item: 'Surgical Consult & Pre-Op Clearance', code: '99254', cost: 550.00 },
+            { item: 'IV Hydration & Analgesia Administration', code: '96360', cost: 260.00 }
+          ]
+        },
+        {
+          id: 'AMB-8025',
+          mrn: 'CF-58190',
+          name: 'David Kalu',
+          age: 45,
+          gender: 'Male',
+          blood: 'AB+',
+          bay: 'BAY-05 (Minor Trauma)',
+          arrival: '24m ago',
+          condition: 'Deep Forearm Laceration & Hemostasis',
+          severity: 'Middle',
+          severityScore: 62,
+          admissionStatus: 'Not Approved',
+          vitals: { hr: 88, bp: '130/85', sugar: 120, temp: 98.6, spo2: 99 },
+          equipment: ['Hemostatic Bandage', 'IV Access'],
+          avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 639-4412 (Wife: Amara)',
+          admissions: [],
+          labs: [
+            { test: 'Complete Blood Count (CBC)', value: 'Normal', ref: 'Reference Normal', status: 'NORMAL', isAlert: false },
+            { test: 'Coagulation (INR / PT)', value: '1.05', ref: '0.8 - 1.2', status: 'NORMAL', isAlert: false }
+          ],
+          healthIssues: [
+            { title: 'Mild Dyslipidemia', type: 'Metabolic', desc: 'Diet controlled' }
+          ],
+          insurance: {
+            carrier: 'UnitedHealthcare Choice Plus',
+            policyId: 'UHC-440192',
+            groupNum: 'GRP-712',
+            coveragePercent: 85,
+            subscription: 'Active Corporate Health Plan ($30/mo - Active)'
+          },
+          billing: [
+            { item: 'Ambulance First Responder Response', code: 'A0426', cost: 450.00 },
+            { item: 'Complex Laceration Repair & Exploration', code: '12034', cost: 880.00 },
+            { item: 'Tetanus Prophylaxis & Local Anesthesia', code: '90715', cost: 180.00 },
+            { item: 'Wound Dressing & Sterile Supplies', code: 'A6209', cost: 140.00 }
+          ]
+        },
+        {
+          id: 'AMB-8028',
+          mrn: 'CF-51928',
+          name: 'Maria Gomez',
+          age: 61,
+          gender: 'Female',
+          blood: 'B-',
+          bay: 'BAY-06 (Cardiology Bay)',
+          arrival: '31m ago',
+          condition: 'Atrial Fibrillation with Controlled Rate',
+          severity: 'Middle',
+          severityScore: 59,
+          admissionStatus: 'Approved',
+          vitals: { hr: 96, bp: '138/88', sugar: 145, temp: 98.4, spo2: 96 },
+          equipment: ['12-Lead ECG Monitor', 'IV Infusion Pump'],
+          avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 902-1144 (Son: Carlos)',
+          admissions: [
+            { date: 'Nov 2022', hospital: 'St. Vincent Hospital', reason: 'Transient Ischemic Attack (TIA) Workup', physician: 'Dr. G. Patel' }
+          ],
+          labs: [
+            { test: 'Serum Troponin', value: '0.02 ng/mL', ref: '< 0.04 ng/mL', status: 'NORMAL', isAlert: false },
+            { test: 'Serum Potassium', value: '4.1 mEq/L', ref: '3.5 - 5.0 mEq/L', status: 'NORMAL', isAlert: false },
+            { test: 'HbA1c', value: '7.1 %', ref: '< 5.7 %', status: 'ELEVATED DIABETES', isAlert: true }
+          ],
+          healthIssues: [
+            { title: 'Type 2 Diabetes Mellitus', type: 'Endocrine', desc: 'Metformin 500mg BID' },
+            { title: 'Paroxysmal Atrial Fibrillation', type: 'Cardiac', desc: 'Takes Apixaban 5mg daily' }
+          ],
+          insurance: {
+            carrier: 'Cigna Premier Health Global',
+            policyId: 'CIG-993812',
+            groupNum: 'GRP-119',
+            coveragePercent: 80,
+            subscription: 'Cigna Chronic Care Navigator ($40/mo - Active)'
+          },
+          billing: [
+            { item: 'Emergency Paramedic Evaluation & Transit', code: 'A0426', cost: 480.00 },
+            { item: 'ER Diagnostic Telemetry & Rhythm Analysis', code: '93010', cost: 420.00 },
+            { item: 'IV Antiarrhythmic Infusion & Monitoring', code: '96365', cost: 380.00 },
+            { item: 'Comprehensive Metabolic Panel (CMP)', code: '80053', cost: 190.00 }
+          ]
+        },
+        {
+          id: 'AMB-8031',
+          mrn: 'CF-44102',
+          name: 'Lucas Vance',
+          age: 19,
+          gender: 'Male',
+          blood: 'A+',
+          bay: 'BAY-07 (Ambulance Curable)',
+          arrival: '38m ago',
+          condition: 'Heat Exhaustion & Mild Dehydration (Field Athletics)',
+          severity: 'Zero', // Zero: can be cured in ambulance
+          severityScore: 22,
+          admissionStatus: 'Not Approved',
+          vitals: { hr: 78, bp: '118/76', sugar: 92, temp: 99.1, spo2: 99 },
+          equipment: ['Oral Electrolyte Rehydration', 'Cooling Gel Pack'],
+          avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 728-1190 (Coach: Dan Miller)',
+          admissions: [],
+          labs: [
+            { test: 'Rapid Blood Glucose', value: '92 mg/dL', ref: '70 - 99 mg/dL', status: 'OPTIMAL', isAlert: false },
+            { test: 'Electrolyte Screen (Sodium/K)', value: 'Normal', ref: 'Normal Limits', status: 'RESOLVING', isAlert: false }
+          ],
+          healthIssues: [
+            { title: 'No Chronic Conditions', type: 'Status', desc: 'Collegiate athlete' }
+          ],
+          insurance: {
+            carrier: 'NCAA Student Athlete Comprehensive',
+            policyId: 'STU-99014',
+            groupNum: 'GRP-COL8',
+            coveragePercent: 90,
+            subscription: 'Campus Sports Health Shield ($15/mo - Active)'
+          },
+          billing: [
+            { item: 'On-Site Paramedic Athletic Field Assessment', code: 'A0425', cost: 250.00 },
+            { item: 'Ambulance Oral Electrolyte Infusion Protocol', code: 'A4216', cost: 110.00 },
+            { item: 'Cooling Pack & Vital Observation Recovery', code: 'A4556', cost: 90.00 }
+          ]
+        },
+        {
+          id: 'AMB-8035',
+          mrn: 'CF-39912',
+          name: 'Chloe Bennett',
+          age: 24,
+          gender: 'Female',
+          blood: 'O+',
+          bay: 'BAY-08 (Ambulance Curable)',
+          arrival: '45m ago',
+          condition: 'Mild Allergic Urticaria (Contact Dermatitis Resolved)',
+          severity: 'Zero', // Zero: cured in ambulance
+          severityScore: 18,
+          admissionStatus: 'Not Approved',
+          vitals: { hr: 72, bp: '112/74', sugar: 88, temp: 98.6, spo2: 100 },
+          equipment: ['Antihistamine Protocol (Administered)', 'Observation'],
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces',
+          contact: '+1 (555) 304-9923 (Self / Mother: Sarah)',
+          admissions: [],
+          labs: [
+            { test: 'Rapid Capillary Blood Glucose', value: '88 mg/dL', ref: '70 - 99 mg/dL', status: 'OPTIMAL', isAlert: false }
+          ],
+          healthIssues: [
+            { title: 'Mild Seasonal Pollen Sensitivity', type: 'Allergy', desc: 'No anaphylaxis' }
+          ],
+          insurance: {
+            carrier: 'Kaiser Permanente Classic Plus',
+            policyId: 'KP-229104',
+            groupNum: 'GRP-K02',
+            coveragePercent: 85,
+            subscription: 'Kaiser Digital Health Pass ($22/mo - Active)'
+          },
+          billing: [
+            { item: 'Field Paramedic Allergy Triage & Protocol', code: 'A0425', cost: 240.00 },
+            { item: 'Single Dose Antihistamine Field Administration', code: 'J1200', cost: 75.00 },
+            { item: 'Dermatological Response Monitoring', code: '99211', cost: 65.00 }
+          ]
+        }
+      ]
+    };
+
+    // ================= SOUND & AUDIO TELEMETRY =================
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(freq = 880, duration = 0.08) {
+      if (!AppState.audioHeartbeat) return;
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {
+        // Audio might be blocked by browser policy until interaction
+      }
+    }
+ 
+    // ================= 3-MODE THEME CONTROLLER (Light, Dark, Colorblind) =================
+    function setTheme(theme) {
+      AppState.theme = theme;
+      localStorage.setItem('careflow_theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.body.classList.remove('dark');
+      }
+      updateThemeButtons();
+      if (AppState.currentView === 'screen-triage') {
+        render8ScreenTriage();
+      }
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }
+
+    function updateThemeButtons() {
+      const current = AppState.theme || 'light';
+      ['light', 'dark', 'colorblind'].forEach(t => {
+        const btn = document.getElementById(`theme-btn-${t}`);
+        if (!btn) return;
+        if (t === current) {
+          if (t === 'light') {
+            btn.className = 'px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-bold bg-white text-brand-600 shadow-xs cursor-pointer';
+          } else if (t === 'dark') {
+            btn.className = 'px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-bold bg-slate-900 text-blue-400 shadow-xs cursor-pointer border border-slate-700';
+          } else {
+            btn.className = 'px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-bold bg-amber-600 text-white shadow-xs cursor-pointer';
+          }
+        } else {
+          btn.className = 'px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg flex items-center space-x-1.5 transition font-medium text-slate-600 hover:text-slate-900 cursor-pointer';
+        }
+      });
+    }
+
+    function toggleAudioHeartbeat() {
+      AppState.audioHeartbeat = !AppState.audioHeartbeat;
+      const icon = document.getElementById('audio-icon');
+      if (AppState.audioHeartbeat) {
+        icon.className = 'w-4 h-4 text-brand-600';
+        showToast('Audio Telemetry Enabled', 'Soft ER vital monitor pings active.');
+        playBeep(800, 0.1);
+      } else {
+        icon.className = 'w-4 h-4 text-slate-400';
+        showToast('Audio Telemetry Muted', 'Sound alerts are silenced.');
+      }
+    }
+
+    // Auto heartbeat periodic ping
+    setInterval(() => {
+      if (AppState.currentView === 'screen-triage' && AppState.audioHeartbeat) {
+        // High urgency pulse
+        playBeep(920, 0.05);
+      }
+    }, 4500);
+
+    // ================= TOAST NOTIFICATION UTILITY =================
+    function showToast(title, message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-white rounded-xl shadow-lg border border-slate-200 p-4 max-w-sm pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0 flex items-start space-x-3';
+      
+      let iconMarkup = '<div class="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0"><i data-lucide="info" class="w-4 h-4"></i></div>';
+      if (type === 'success') {
+        iconMarkup = '<div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div>';
+      } else if (type === 'alert') {
+        iconMarkup = '<div class="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0"><i data-lucide="alert-triangle" class="w-4 h-4"></i></div>';
+      }
+
+      toast.innerHTML = `
+        ${iconMarkup}
+        <div class="flex-1 pr-2">
+          <p class="text-xs font-bold text-slate-900">${title}</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">${message}</p>
+        </div>
+      `;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Trigger animation
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 20);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ================= NAVIGATION SYSTEM =================
+    function navigateTo(screenId, params = null) {
+      AppState.currentView = screenId;
+
+      // Hide all screen views
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.add('hidden'));
+
+      // Conditionally hide top navbar on login screen, keep visible on all other pages
+      const topNavbar = document.getElementById('top-navbar');
+      if (topNavbar) {
+        if (screenId === 'screen-login') {
+          topNavbar.classList.add('hidden');
+        } else {
+          topNavbar.classList.remove('hidden');
+        }
+      }
+
+      // Show selected screen
+      const target = document.getElementById(screenId);
+      if (target) {
+        target.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Update Nav Button Active States
+      updateNavHighlight(screenId);
+
+      // Trigger appropriate view renders
+      if (screenId === 'screen-triage') {
+        render8ScreenTriage();
+      } else if (screenId === 'screen-patient-detail' && params) {
+        renderPatientDetail(params);
+      }
+
+      // Re-initialize Lucide Icons on screen transition
+      lucide.createIcons();
+    }
+
+    function togglePasswordVisibility() {
+      const pwdInput = document.getElementById('login-password');
+      const icon = document.getElementById('password-toggle-icon');
+      if (!pwdInput) return;
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        pwdInput.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    function updateNavHighlight(screenId) {
+      const navButtons = [
+        { id: 'nav-btn-login', match: 'screen-login' },
+        { id: 'nav-btn-intake', match: 'screen-intake' },
+        { id: 'nav-btn-ambulance', match: 'screen-ambulance' },
+        { id: 'nav-btn-triage', match: 'screen-triage' }
+      ];
+
+      navButtons.forEach(btn => {
+        const el = document.getElementById(btn.id);
+        if (!el) return;
+        if (btn.match === screenId || (screenId === 'screen-patient-detail' && btn.match === 'screen-triage')) {
+          el.className = 'px-3 py-1.5 rounded-lg transition bg-white text-brand-600 font-semibold shadow-xs flex items-center space-x-1.5';
+        } else {
+          el.className = 'px-3 py-1.5 rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center space-x-1.5';
+        }
+      });
+    }
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const role = document.getElementById('login-role').value;
+      const errorMsg = document.getElementById('login-error-msg');
+      const passwordInput = document.getElementById('login-password');
+
+      // Valid security passwords for CareFlow ER
+      const validPasswords = ['Emergency2026@', 'emergency2026', 'CareFlow2026@'];
+
+      if (!validPasswords.includes(password)) {
+        if (errorMsg) {
+          errorMsg.classList.remove('hidden');
+          lucide.createIcons();
+        }
+        if (passwordInput) {
+          passwordInput.classList.add('border-rose-500', 'bg-rose-50/50');
+          passwordInput.focus();
+        }
+        showToast('Authentication Failed', 'Invalid security password. Please enter authorized key: Emergency2026@', 'error');
+        playBeep(350, 0.25);
+        return;
+      }
+
+      // Successful password validation -> Reset error styling
+      if (errorMsg) errorMsg.classList.add('hidden');
+      if (passwordInput) passwordInput.classList.remove('border-rose-500', 'bg-rose-50/50');
+
+      AppState.currentUser.role = role;
+      AppState.currentUser.name = email.split('@')[0].replace('.', ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+
+      // Update Doctor Profile Pill
+      const profileBadge = document.getElementById('doctor-profile-badge');
+      if (profileBadge) {
+        profileBadge.innerHTML = `
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop&crop=faces" class="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200">
+            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+          </div>
+          <div class="text-left hidden lg:block">
+            <p class="text-xs font-semibold text-slate-800 leading-tight">${AppState.currentUser.name}</p>
+            <p class="text-[10px] text-brand-600 font-medium leading-tight">${role}</p>
+          </div>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+        `;
+      }
+
+      showToast('Authentication Successful', `Welcome, ${AppState.currentUser.name} (${role})`, 'success');
+      playBeep(700, 0.1);
+
+      // Multi-layer flow: Proceed to Patient Intake Selection screen
+      navigateTo('screen-intake');
+    }
+
+    function fillDemoLogin(type) {
+      const errorMsg = document.getElementById('login-error-msg');
+      const passwordInput = document.getElementById('login-password');
+      if (errorMsg) errorMsg.classList.add('hidden');
+      if (passwordInput) {
+        passwordInput.classList.remove('border-rose-500', 'bg-rose-50/50');
+        passwordInput.value = 'Emergency2026@';
+      }
+
+      if (type === 'doc') {
+        document.getElementById('login-email').value = 'dr.sarah.chen@careflow.er';
+        document.getElementById('login-role').value = 'ER Trauma Lead';
+      } else if (type === 'emt') {
+        document.getElementById('login-email').value = 'paramedic.marcus@careflow.er';
+        document.getElementById('login-role').value = 'Senior Paramedic';
+      } else if (type === 'nurse') {
+        document.getElementById('login-email').value = 'triage.elena@careflow.er';
+        document.getElementById('login-role').value = 'Triage Charge Nurse';
+      }
+      showToast('Credentials Populated', `Loaded profile for: ${type.toUpperCase()}`);
+    }
+
+    // Modal controls for Normal Patient Intake
+    function openNormalIntakeModal() {
+      document.getElementById('modal-normal-entry').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeNormalIntakeModal() {
+      document.getElementById('modal-normal-entry').classList.add('hidden');
+    }
+
+    function handleNormalEntrySubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('normal-name').value;
+      const age = parseInt(document.getElementById('normal-age').value) || 30;
+      const gender = document.getElementById('normal-gender').value;
+      const complaint = document.getElementById('normal-complaint').value || 'Walk-in routine checkup';
+
+      // Create new middle/zero routine case and add to triage
+      const newPatient = {
+        id: `WALK-${Math.floor(1000 + Math.random() * 9000)}`,
+        mrn: `CF-${Math.floor(10000 + Math.random() * 90000)}`,
+        name: name,
+        age: age,
+        gender: gender,
+        blood: 'A+',
+        bay: 'General Walk-In Triage',
+        arrival: 'Just now',
+        condition: complaint,
+        severity: 'Middle',
+        severityScore: 48,
+        vitals: { hr: 76, bp: '120/80', sugar: 95, temp: 98.6, spo2: 99 },
+        equipment: ['Standard Monitoring'],
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces',
+        contact: document.getElementById('normal-phone').value,
+        admissions: [],
+        labs: [
+          { test: 'Vital Check', value: 'Normal', ref: 'Standard', status: 'STABLE', isAlert: false }
+        ],
+        healthIssues: [
+          { title: 'Routine Visit', type: 'Intake', desc: complaint }
+        ],
+        insurance: {
+          carrier: 'Standard Health PPO',
+          policyId: 'STD-109283',
+          groupNum: 'GRP-100',
+          coveragePercent: 80,
+          subscription: 'Standard Patient Portal (Active)'
+        },
+        billing: [
+          { item: 'Outpatient Triage Consultation', code: '99202', cost: 180.00 },
+          { item: 'Routine Diagnostic Observation', code: '99211', cost: 95.00 }
+        ]
+      };
+
+      // Add to patient queue, maintain 8 slots by replacing lowest or appending
+      insertPatientAndSort(newPatient);
+
+      // Async sync to server bridge (CRUD: CREATE)
+      try {
+        fetch('/api/v1/patients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPatient)
+        }).catch(() => {});
+      } catch(err) {}
+
+      closeNormalIntakeModal();
+      showToast('Normal Patient Enrolled (POST)', `${name} enrolled and placed into triage queue.`, 'success');
+      navigateTo('screen-triage');
+    }
+
+    // ================= SCREEN 2: DYNAMIC CRITICALITY BAR & AMBULANCE FORM =================
+    
+    // Evaluates vitals and adjusts the Criticality Bar
+    function evaluateCriticality() {
+      const hr = parseInt(document.getElementById('amb-vital-hr').value) || 80;
+      const temp = parseFloat(document.getElementById('amb-vital-temp').value) || 98.6;
+      const sugar = parseInt(document.getElementById('amb-vital-sugar').value) || 100;
+      const bpStr = document.getElementById('amb-vital-bp').value || '120/80';
+      const bpSys = parseInt(bpStr.split('/')[0]) || 120;
+
+      // Count critical equipment checked
+      const checkedEquipment = document.querySelectorAll('input[name="equipment"]:checked');
+      let criticalEquipCount = 0;
+      checkedEquipment.forEach(eq => {
+        if (['Defibrillator (AED)', 'Portable Ventilator', '12-Lead ECG Monitor'].includes(eq.value)) {
+          criticalEquipCount++;
+        }
+      });
+
+      // Calculate severity
+      let computedSeverity = 'Middle';
+      let score = 50;
+
+      if (hr > 125 || hr < 45 || bpSys > 175 || bpSys < 85 || sugar > 240 || sugar < 55 || temp > 102.5 || criticalEquipCount >= 2) {
+        computedSeverity = 'High';
+        score = 92;
+      } else if (hr >= 65 && hr <= 95 && bpSys >= 110 && bpSys <= 130 && sugar >= 75 && sugar <= 130 && temp < 99.5 && criticalEquipCount === 0) {
+        computedSeverity = 'Zero';
+        score = 20;
+      } else {
+        computedSeverity = 'Middle';
+        score = 60;
+      }
+
+      applyCriticalityState(computedSeverity, score);
+    }
+
+    function setCriticalityOverride(state) {
+      let score = 92;
+      if (state === 'Middle') score = 60;
+      if (state === 'Zero') score = 20;
+      applyCriticalityState(state, score);
+    }
+
+    function applyCriticalityState(state, score) {
+      document.getElementById('amb-criticality-value').value = state;
+
+      const fill = document.getElementById('criticality-bar-fill');
+      const pill = document.getElementById('criticality-status-pill');
+      const pillText = document.getElementById('criticality-pill-text');
+
+      const btnHigh = document.getElementById('crit-btn-high');
+      const btnMid = document.getElementById('crit-btn-middle');
+      const btnZero = document.getElementById('crit-btn-zero');
+
+      // Reset button styles to default
+      btnHigh.className = 'p-3 rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:bg-red-50 hover:border-red-400';
+      btnMid.className = 'p-3 rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:bg-amber-50 hover:border-amber-400';
+      btnZero.className = 'p-3 rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:bg-emerald-50 hover:border-emerald-400';
+
+      if (state === 'High') {
+        fill.style.width = `${Math.max(score, 88)}%`;
+        fill.className = 'h-full rounded-full transition-all duration-500 bg-red-500 shadow-sm shadow-red-500/50';
+        pill.className = 'px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase badge-high flex items-center space-x-1.5';
+        pillText.innerText = 'High (Critical Condition)';
+        btnHigh.className = 'p-3 rounded-xl border-2 border-red-500 bg-red-50/80 text-left transition ring-2 ring-red-500/20';
+      } else if (state === 'Middle') {
+        fill.style.width = `${score}%`;
+        fill.className = 'h-full rounded-full transition-all duration-500 bg-amber-500 shadow-sm shadow-amber-500/50';
+        pill.className = 'px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase badge-middle flex items-center space-x-1.5';
+        pillText.innerText = 'Middle (Stable Condition)';
+        btnMid.className = 'p-3 rounded-xl border-2 border-amber-500 bg-amber-50/80 text-left transition ring-2 ring-amber-500/20';
+      } else {
+        fill.style.width = `${Math.min(score, 30)}%`;
+        fill.className = 'h-full rounded-full transition-all duration-500 bg-emerald-500 shadow-sm shadow-emerald-500/50';
+        pill.className = 'px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase badge-zero flex items-center space-x-1.5';
+        pillText.innerText = 'Zero (Curable in Ambulance)';
+        btnZero.className = 'p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/80 text-left transition ring-2 ring-emerald-500/20';
+      }
+
+      lucide.createIcons();
+    }
+
+    // Quick presets for ambulance test cases
+    function loadSampleAmbulanceCase(type) {
+      if (type === 'high') {
+        document.getElementById('amb-patient-id').value = `AMB-${Math.floor(9100 + Math.random()*800)}`;
+        document.getElementById('amb-patient-name').value = 'Jonathan Hayes';
+        document.getElementById('amb-patient-age').value = '64';
+        document.getElementById('amb-vital-hr').value = '142';
+        document.getElementById('amb-vital-temp').value = '100.2';
+        document.getElementById('amb-vital-sugar').value = '245';
+        document.getElementById('amb-vital-bp').value = '188/112';
+        document.getElementById('amb-clinical-notes').value = 'Severe crushing substernal chest pressure, cool and clammy skin, high acute STEMI probability.';
+        // Check critical equipment
+        setEquipmentChecked(['Defibrillator (AED)', '12-Lead ECG Monitor', 'Oxygen Concentrator']);
+      } else if (type === 'middle') {
+        document.getElementById('amb-patient-id').value = `AMB-${Math.floor(9100 + Math.random()*800)}`;
+        document.getElementById('amb-patient-name').value = 'Nora Sterling';
+        document.getElementById('amb-patient-age').value = '39';
+        document.getElementById('amb-vital-hr').value = '94';
+        document.getElementById('amb-vital-temp').value = '99.1';
+        document.getElementById('amb-vital-sugar').value = '128';
+        document.getElementById('amb-vital-bp').value = '132/86';
+        document.getElementById('amb-clinical-notes').value = 'Moderate right lower quadrant abdominal pain, stable vitals, conscious and oriented.';
+        setEquipmentChecked(['IV Infusion Pump']);
+      } else if (type === 'zero') {
+        document.getElementById('amb-patient-id').value = `AMB-${Math.floor(9100 + Math.random()*800)}`;
+        document.getElementById('amb-patient-name').value = 'Tyler Morgan';
+        document.getElementById('amb-patient-age').value = '22';
+        document.getElementById('amb-vital-hr').value = '74';
+        document.getElementById('amb-vital-temp').value = '98.6';
+        document.getElementById('amb-vital-sugar').value = '90';
+        document.getElementById('amb-vital-bp').value = '116/74';
+        document.getElementById('amb-clinical-notes').value = 'Mild heat dizziness, resolving with oral hydration in vehicle. Condition readily manageable by paramedic.';
+        setEquipmentChecked([]);
+      }
+      evaluateCriticality();
+      showToast('Sample Case Loaded', `Paramedic telemetry profile set to ${type.toUpperCase()}.`);
+    }
+
+    function setEquipmentChecked(equipNames) {
+      document.querySelectorAll('input[name="equipment"]').forEach(input => {
+        input.checked = equipNames.includes(input.value);
+      });
+    }
+
+    // Handles submitting the Ambulance Form
+    function handleAmbulanceFormSubmit(e) {
+      e.preventDefault();
+
+      const patientId = document.getElementById('amb-patient-id').value;
+      const patientName = document.getElementById('amb-patient-name').value || 'Emergency Patient';
+      const patientAge = parseInt(document.getElementById('amb-patient-age').value) || 45;
+      const patientGender = document.getElementById('amb-patient-gender').value;
+      const hr = parseInt(document.getElementById('amb-vital-hr').value) || 120;
+      const temp = parseFloat(document.getElementById('amb-vital-temp').value) || 98.6;
+      const sugar = parseInt(document.getElementById('amb-vital-sugar').value) || 110;
+      const bp = document.getElementById('amb-vital-bp').value || '130/80';
+      const severity = document.getElementById('amb-criticality-value').value;
+      const notes = document.getElementById('amb-clinical-notes').value || 'Incoming ambulance transfer';
+
+      // Collect equipment
+      const equipment = [];
+      document.querySelectorAll('input[name="equipment"]:checked').forEach(eq => {
+        equipment.push(eq.value);
+      });
+
+      let score = 50;
+      if (severity === 'High') score = 95;
+      else if (severity === 'Middle') score = 60;
+      else score = 20;
+
+      // Construct patient model
+      const newPatient = {
+        id: patientId,
+        mrn: `CF-${Math.floor(10000 + Math.random() * 90000)}`,
+        name: patientName,
+        age: patientAge,
+        gender: patientGender,
+        blood: 'O+',
+        bay: severity === 'High' ? 'BAY-01 (Priority)' : (severity === 'Middle' ? 'BAY-04' : 'Ambulance Care'),
+        arrival: 'Just now (In Transit)',
+        condition: notes,
+        severity: severity,
+        severityScore: score,
+        vitals: { hr: hr, bp: bp, sugar: sugar, temp: temp, spo2: 92 },
+        equipment: equipment.length > 0 ? equipment : ['Field Monitoring'],
+        avatar: patientGender === 'Female' 
+          ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=faces'
+          : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=faces',
+        contact: '+1 (555) 800-4321 (Next of Kin)',
+        admissions: [
+          { date: 'Recent', hospital: 'CareFlow ER Network', reason: 'Emergency Field Intake', physician: AppState.currentUser.name }
+        ],
+        labs: [
+          { test: 'Telemetry Heart Rate', value: `${hr} bpm`, ref: '60 - 100 bpm', status: hr > 110 ? 'HIGH' : 'NORMAL', isAlert: hr > 110 },
+          { test: 'Blood Glucose', value: `${sugar} mg/dL`, ref: '70 - 99 mg/dL', status: sugar > 140 ? 'ELEVATED' : 'NORMAL', isAlert: sugar > 140 }
+        ],
+        healthIssues: [
+          { title: 'Acute Presentation', type: 'Emergency', desc: notes }
+        ],
+        insurance: {
+          carrier: 'CareShield Health Priority Plan',
+          policyId: 'CS-771829',
+          groupNum: 'GRP-ER2',
+          coveragePercent: 80,
+          subscription: 'CareFlow Emergency Shield ($39/mo - Active)'
+        },
+        billing: [
+          { item: 'ALS Rapid Ambulance Deployment & Paramedic Care', code: 'A0427', cost: 720.00 },
+          { item: 'Immediate Critical Care Triage & Bay Allocation', code: '99285', cost: 1650.00 },
+          { item: 'Continuous Multi-parameter Telemetry Monitoring', code: '93005', cost: 350.00 },
+          { item: 'IV Pharmacotherapy & Oxygen Supply Protocol', code: 'J3490', cost: 480.00 }
+        ]
+      };
+
+      // Auto-rank and insert into 8-Screen Split
+      insertPatientAndSort(newPatient);
+
+      // Async sync to server bridge if available
+      try {
+        fetch('/api/v1/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            case_id: patientId,
+            patient_status: severity,
+            heart_rate: hr,
+            oxygen_level: 92,
+            patient_name: patientName,
+            blood_pressure: bp,
+            sugar_level: sugar,
+            temperature: temp,
+            equipment: equipment,
+            timestamp: new Date().toLocaleTimeString()
+          })
+        }).catch(() => {});
+      } catch(err) {}
+
+      showToast('Payload Ingested & Ranked!', `${patientName} (${severity} Urgency) auto-sorted into ER 8-Screen Grid.`, 'success');
+      playBeep(980, 0.12);
+
+      // Transition to Screen 3: ER Triage Dashboard
+      navigateTo('screen-triage');
+    }
+
+    // ================= AUTO-SORTING LOGIC & QUEUE MANAGEMENT =================
+    // Ensures High conditions are at the top, cascading down to Middle, then Zero at the bottom.
+    function sortPatientsByUrgency(patientList) {
+      const severityWeight = {
+        'High': 300,
+        'Middle': 200,
+        'Zero': 100
+      };
+
+      return [...patientList].sort((a, b) => {
+        const weightA = (severityWeight[a.severity] || 0) + (a.severityScore || 0);
+        const weightB = (severityWeight[b.severity] || 0) + (b.severityScore || 0);
+        return weightB - weightA; // Descending: High -> Middle -> Zero
+      });
+    }
+
+    function insertPatientAndSort(newPatient) {
+      // Put at start of array
+      AppState.patients.unshift(newPatient);
+      // Auto-sort strictly by emergency level
+      AppState.patients = sortPatientsByUrgency(AppState.patients);
+      // Keep primary list at 8 screens or re-slice
+      if (AppState.patients.length > 8) {
+        AppState.patients = AppState.patients.slice(0, 8);
+      }
+    }
+
+    // ================= SCREEN 3: 8-SCREEN TRIAGE DASHBOARD RENDERING =================
+    function setTriageFilter(filter) {
+      AppState.currentTriageFilter = filter;
+      
+      const pills = ['all', 'high', 'middle', 'zero'];
+      pills.forEach(p => {
+        const el = document.getElementById(`filter-pill-${p}`);
+        if (!el) return;
+        if (p === filter.toLowerCase()) {
+          el.className = 'px-2.5 py-1 rounded-lg bg-white text-brand-600 shadow-xs font-bold';
+        } else {
+          el.className = 'px-2.5 py-1 rounded-lg hover:text-slate-900 transition font-medium';
+        }
+      });
+
+      render8ScreenTriage();
+    }
+
+    function render8ScreenTriage() {
+      const container = document.getElementById('triage-8-screen-grid');
+      const searchQuery = (document.getElementById('triage-search-input')?.value || '').toLowerCase();
+      
+      // Strict Auto-Sort: Highest critical conditions positioned in first/top panels cascading down
+      let sortedList = sortPatientsByUrgency(AppState.patients);
+
+      // Update counters
+      const highCount = sortedList.filter(p => p.severity === 'High').length;
+      const midCount = sortedList.filter(p => p.severity === 'Middle').length;
+      const zeroCount = sortedList.filter(p => p.severity === 'Zero').length;
+
+      document.getElementById('metric-high-count').innerText = highCount;
+      document.getElementById('metric-mid-count').innerText = midCount;
+      document.getElementById('metric-zero-count').innerText = zeroCount;
+      document.getElementById('metric-total-count').innerText = `${sortedList.length} / 8`;
+
+      // Apply filter
+      if (AppState.currentTriageFilter !== 'all') {
+        sortedList = sortedList.filter(p => p.severity === AppState.currentTriageFilter);
+      }
+
+      // Apply search query
+      if (searchQuery) {
+        sortedList = sortedList.filter(p => 
+          p.name.toLowerCase().includes(searchQuery) ||
+          p.id.toLowerCase().includes(searchQuery) ||
+          p.condition.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      container.innerHTML = '';
+
+      if (sortedList.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl p-12 text-center border border-slate-200">
+            <i data-lucide="inbox" class="w-10 h-10 text-slate-300 mx-auto mb-3"></i>
+            <p class="text-sm font-semibold text-slate-700">No patients matching current filter.</p>
+            <button onclick="setTriageFilter('all')" class="mt-3 text-xs text-brand-600 font-semibold underline">Reset filters</button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      sortedList.forEach((patient, index) => {
+        const curTheme = AppState.theme || 'light';
+        let rankBadge = '';
+        let severityBorderGlow = '';
+        let waveformColor = '';
+
+        if (curTheme === 'colorblind') {
+          if (patient.severity === 'High') {
+            rankBadge = `<span class="badge-high text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-orange-100 text-orange-950 border-2 border-orange-600 flex items-center space-x-1 shadow-xs"><span class="text-[11px] leading-none">▲</span><span>HIGH #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-orange-500 border-l-[6px] shadow-xs hover:border-orange-600';
+            waveformColor = 'text-orange-600';
+          } else if (patient.severity === 'Middle') {
+            rankBadge = `<span class="badge-middle text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-sky-100 text-sky-950 border-2 border-sky-600 flex items-center space-x-1 shadow-xs"><span class="text-[11px] leading-none">●</span><span>MID #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-sky-500 border-l-[6px] shadow-xs hover:border-sky-600';
+            waveformColor = 'text-sky-600';
+          } else {
+            rankBadge = `<span class="badge-zero text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-950 border-2 border-indigo-600 flex items-center space-x-1 shadow-xs"><span class="text-[11px] leading-none">■</span><span>ZERO #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-indigo-600 border-l-[6px] shadow-xs hover:border-indigo-700';
+            waveformColor = 'text-indigo-600';
+          }
+        } else if (curTheme === 'dark') {
+          if (patient.severity === 'High') {
+            rankBadge = `<span class="badge-high text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-red-950/80 text-red-300 border border-red-800/60 flex items-center space-x-1"><span class="text-[11px] leading-none">▲</span><span>HIGH #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-slate-700 hover:border-red-400';
+            waveformColor = 'text-red-400';
+          } else if (patient.severity === 'Middle') {
+            rankBadge = `<span class="badge-middle text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800/60 flex items-center space-x-1"><span class="text-[11px] leading-none">●</span><span>MID #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-slate-700 hover:border-amber-400';
+            waveformColor = 'text-amber-400';
+          } else {
+            rankBadge = `<span class="badge-zero text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 flex items-center space-x-1"><span class="text-[11px] leading-none">■</span><span>ZERO #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-slate-700 hover:border-emerald-400';
+            waveformColor = 'text-emerald-400';
+          }
+        } else {
+          // Light Mode
+          if (patient.severity === 'High') {
+            rankBadge = `<span class="badge-high text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-red-100 text-red-700 flex items-center space-x-1"><span class="text-[11px] leading-none">▲</span><span>HIGH #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-slate-200/80 hover:border-red-400';
+            waveformColor = 'text-red-500';
+          } else if (patient.severity === 'Middle') {
+            rankBadge = `<span class="badge-middle text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 flex items-center space-x-1"><span class="text-[11px] leading-none">●</span><span>MID #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-slate-200/80 hover:border-amber-400';
+            waveformColor = 'text-amber-500';
+          } else {
+            rankBadge = `<span class="badge-zero text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 flex items-center space-x-1"><span class="text-[11px] leading-none">■</span><span>ZERO #${index + 1}</span></span>`;
+            severityBorderGlow = 'border-slate-200/80 hover:border-emerald-400';
+            waveformColor = 'text-emerald-500';
+          }
+        }
+
+        let statusTag = patient.admissionStatus === 'Approved'
+          ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">APPROVED</span>'
+          : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">HOLD</span>';
+
+        // Active Medical Equipment tags (top 2-3)
+        const equipBadges = (patient.equipment || []).slice(0, 3).map(eq =>
+          `<span class="inline-flex items-center text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md truncate max-w-[130px]">${eq}</span>`
+        ).join('');
+
+        // Build 8-Bay Card
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl p-5 border ${severityBorderGlow} shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between cursor-pointer group`;
+        card.onclick = () => {
+          navigateTo('screen-patient-detail', patient);
+        };
+
+        card.innerHTML = `
+          <div>
+            <!-- Top Header: Ambulance ID, Bay Number, Status Tag, Priority Badge -->
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xs font-mono font-bold text-slate-700">${patient.id}</span>
+                <span class="text-slate-300">&bull;</span>
+                <span class="text-[11px] text-slate-500 font-medium">${patient.bay.split(' ')[0]}</span>
+                ${statusTag}
+              </div>
+              <div class="flex items-center space-x-1.5">
+                ${rankBadge}
+              </div>
+            </div>
+
+            <!-- Patient Details: Photo, Name, Age, Gender, Blood Group, Condition -->
+            <div class="flex items-start space-x-3.5 mb-3.5">
+              <img src="${patient.avatar}" alt="${patient.name}" class="w-12 h-12 rounded-xl object-cover ring-2 ring-slate-100 shrink-0 group-hover:scale-105 transition-transform">
+              <div class="min-w-0 flex-1">
+                <h4 class="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition truncate">${patient.name}</h4>
+                <p class="text-[11px] text-slate-500 mt-0.5">${patient.age} yrs &bull; ${patient.gender} &bull; <span class="font-semibold text-slate-700">${patient.blood}</span></p>
+                <p class="text-[11px] font-medium text-slate-700 line-clamp-1 mt-1 leading-snug">${patient.condition}</p>
+              </div>
+            </div>
+
+            <!-- Live Telemetry Metrics: HEART, BP, GLUCOSE -->
+            <div class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/60 grid grid-cols-3 gap-1.5 text-center mb-2.5">
+              <div>
+                <span class="text-[9px] font-semibold text-slate-400 block uppercase">Heart</span>
+                <span class="text-xs font-bold ${patient.vitals.hr > 120 ? 'text-red-600' : 'text-slate-800'}">${patient.vitals.hr} <span class="text-[9px] font-normal text-slate-400">bpm</span></span>
+              </div>
+              <div>
+                <span class="text-[9px] font-semibold text-slate-400 block uppercase">BP</span>
+                <span class="text-xs font-bold text-slate-800">${patient.vitals.bp}</span>
+              </div>
+              <div>
+                <span class="text-[9px] font-semibold text-slate-400 block uppercase">Glucose</span>
+                <span class="text-xs font-bold text-slate-800">${patient.vitals.sugar} <span class="text-[9px] font-normal text-slate-400">mg</span></span>
+              </div>
+            </div>
+
+            <!-- Colored Live Waveform / Sparkline Indicator Graph -->
+            <div class="h-6 w-full rounded-lg bg-slate-50 border border-slate-200/50 flex items-center px-2 mb-3">
+              <svg class="w-full h-4 ${waveformColor}" viewBox="0 0 100 20" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M0,10 L25,10 L30,4 L35,16 L40,2 L45,18 L50,10 L75,10 L80,5 L85,15 L90,10 L100,10" />
+              </svg>
+            </div>
+
+            <!-- Active Medical Equipment tags -->
+            <div class="flex flex-wrap gap-1 mb-2">
+              ${equipBadges}
+            </div>
+          </div>
+
+          <!-- Footer action link: "View History & Bill" -->
+          <div class="pt-3 mt-1 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-[10px] text-slate-400 flex items-center">
+              <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+              ${patient.arrival}
+            </span>
+            <div class="inline-flex items-center text-xs font-semibold text-brand-600 hover:text-brand-700 transition group-hover:translate-x-0.5">
+              <span>View History & Bill</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 ml-0.5"></i>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    function simulateTelemetryPing() {
+      // Slightly fluctuate vitals to simulate live monitor refresh
+      AppState.patients.forEach(p => {
+        const delta = Math.floor(Math.random() * 5) - 2;
+        p.vitals.hr = Math.max(55, Math.min(180, p.vitals.hr + delta));
+      });
+      // Re-sort and re-render
+      AppState.patients = sortPatientsByUrgency(AppState.patients);
+      render8ScreenTriage();
+      showToast('Live Telemetry Refreshed', 'Field ECG, heart rate & telemetry stream updated.', 'info');
+      playBeep(880, 0.08);
+    }
+
+    // ================= SCREEN 4 & 5: DETAILED PATIENT HISTORY & BILLING =================
+    function renderPatientDetail(patient) {
+      AppState.activePatientDetail = patient;
+
+      // Severity badge at top
+      const severityBadge = document.getElementById('detail-triage-badge');
+      const severityLabel = document.getElementById('detail-severity-label');
+      if (patient.severity === 'High') {
+        severityBadge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider badge-high flex items-center space-x-1.5';
+        severityLabel.innerText = '▲ HIGH CRITICAL CONDITION';
+      } else if (patient.severity === 'Middle') {
+        severityBadge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider badge-middle flex items-center space-x-1.5';
+        severityLabel.innerText = '● MIDDLE - STABLE CONDITION';
+      } else {
+        severityBadge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider badge-zero flex items-center space-x-1.5';
+        severityLabel.innerText = '■ ZERO - AMBULANCE CURABLE';
+      }
+
+      // Demographics & Avatar
+      document.getElementById('detail-avatar').src = patient.avatar;
+      document.getElementById('detail-patient-name').innerText = patient.name;
+      document.getElementById('detail-blood-group').innerText = `${patient.blood} Blood`;
+      document.getElementById('detail-demographics').innerHTML = `Age: ${patient.age} &bull; ${patient.gender} &bull; MRN: ${patient.mrn} &bull; Case: <span class="font-mono font-bold">${patient.id}</span>`;
+      document.getElementById('detail-bay-num').innerText = patient.bay;
+      document.getElementById('detail-contact').innerText = patient.contact;
+
+      // Vitals Strip
+      document.getElementById('detail-vital-hr').innerText = `${patient.vitals.hr} bpm`;
+      document.getElementById('detail-vital-bp').innerText = patient.vitals.bp;
+      document.getElementById('detail-vital-sugar').innerText = `${patient.vitals.sugar} mg/dL`;
+      document.getElementById('detail-vital-temp').innerText = `${patient.vitals.temp} °F`;
+
+      // 1. Previous Hospital Data & Past Admissions
+      const admissionsContainer = document.getElementById('detail-past-admissions');
+      admissionsContainer.innerHTML = '';
+      if (!patient.admissions || patient.admissions.length === 0) {
+        admissionsContainer.innerHTML = `
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-500 text-center">
+            No previous hospital admissions on record. First ER visit at CareFlow.
+          </div>
+        `;
+      } else {
+        patient.admissions.forEach(adm => {
+          admissionsContainer.innerHTML += `
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-slate-100/60 transition">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-slate-900">${adm.hospital}</span>
+                <span class="text-[11px] font-semibold text-slate-500">${adm.date}</span>
+              </div>
+              <p class="text-xs text-slate-700 font-medium">${adm.reason}</p>
+              <p class="text-[10px] text-slate-400 mt-1">Discharging Physician: ${adm.physician}</p>
+            </div>
+          `;
+        });
+      }
+
+      // 2. Recent Blood Checkups and Lab Results
+      const labsContainer = document.getElementById('detail-lab-results');
+      labsContainer.innerHTML = '';
+      if (!patient.labs || patient.labs.length === 0) {
+        labsContainer.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400">No lab workups queued yet.</td></tr>`;
+      } else {
+        patient.labs.forEach(lab => {
+          let statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">NORMAL</span>';
+          if (lab.isAlert) {
+            statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold ${lab.status.includes('CRITICAL') ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}">${lab.status}</span>`;
+          }
+          labsContainer.innerHTML += `
+            <tr>
+              <td class="py-2.5 font-semibold text-slate-800">${lab.test}</td>
+              <td class="py-2.5 font-bold ${lab.isAlert ? 'text-red-600' : 'text-slate-900'}">${lab.value}</td>
+              <td class="py-2.5 text-slate-500">${lab.ref}</td>
+              <td class="py-2.5 text-right">${statusBadge}</td>
+            </tr>
+          `;
+        });
+      }
+
+      // 3. Known Health Issues
+      const issuesContainer = document.getElementById('detail-health-issues');
+      issuesContainer.innerHTML = '';
+      if (!patient.healthIssues || patient.healthIssues.length === 0) {
+        issuesContainer.innerHTML = `<div class="p-4 rounded-xl bg-slate-50 text-xs text-slate-500 text-center">No known chronic issues reported.</div>`;
+      } else {
+        patient.healthIssues.forEach(issue => {
+          let badgeColor = 'bg-amber-100 text-amber-800';
+          if (issue.type === 'Allergy') badgeColor = 'bg-red-100 text-red-800 font-bold';
+          issuesContainer.innerHTML += `
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-slate-900">${issue.title}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] uppercase font-semibold ${badgeColor}">${issue.type}</span>
+              </div>
+              <p class="text-xs text-slate-600">${issue.desc}</p>
+            </div>
+          `;
+        });
+      }
+
+      // 4. Monthly Subscriptions & Active Health Insurance Policies
+      const insuranceContainer = document.getElementById('detail-insurance-info');
+      insuranceContainer.innerHTML = `
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-900">${patient.insurance.carrier}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Verified 100%</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 pt-1">
+            <div><span class="text-slate-400 block text-[10px]">Policy Number</span><span class="font-mono font-semibold">${patient.insurance.policyId}</span></div>
+            <div><span class="text-slate-400 block text-[10px]">Group ID</span><span class="font-mono font-semibold">${patient.insurance.groupNum}</span></div>
+          </div>
+          <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+            <span class="text-slate-500">Coverage Level:</span>
+            <span class="font-bold text-emerald-600">${patient.insurance.coveragePercent}% In-Network</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-brand-50/60 border border-brand-100 flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-bold text-slate-900">Active Membership Subscription</p>
+            <p class="text-[11px] text-brand-700 font-medium">${patient.insurance.subscription}</p>
+          </div>
+        </div>
+      `;
+
+      // ================= SCREEN 5: TREATMENT & BILLING MODULE =================
+      const billingContainer = document.getElementById('billing-items-container');
+      billingContainer.innerHTML = '';
+
+      let subtotal = 0;
+      patient.billing.forEach(item => {
+        subtotal += item.cost;
+        billingContainer.innerHTML += `
+          <div class="flex items-center justify-between py-1.5 border-b border-slate-50">
+            <div>
+              <span class="font-medium text-slate-800">${item.item}</span>
+              <span class="text-[10px] font-mono text-slate-400 ml-2">CPT: ${item.code}</span>
+            </div>
+            <span class="font-semibold text-slate-900 font-mono">₹${item.cost.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+          </div>
+        `;
+      });
+
+      const coverageRate = (patient.insurance.coveragePercent || 80) / 100;
+      const coverageAmount = subtotal * coverageRate;
+      const copay = 500.00;
+      const patientTotal = (subtotal - coverageAmount) + copay;
+
+      document.getElementById('bill-subtotal').innerText = `₹${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('bill-insurance-name').innerText = `${patient.insurance.carrier} (${patient.insurance.coveragePercent}% Coverage)`;
+      document.getElementById('bill-insurance-deductible').innerText = `-₹${coverageAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('bill-copay').innerText = `₹${copay.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('bill-final-total').innerText = `₹${patientTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      lucide.createIcons();
+    }
+
+    function approveTreatmentPlan() {
+      const patient = AppState.activePatientDetail;
+      if (!patient) return;
+      showToast('Treatment Plan Authorized', `Clinical orders and billing pre-authorized for ${patient.name}.`, 'success');
+      playBeep(980, 0.15);
+    }
+
+    function printPatientSuperbill() {
+      window.print();
+    }
+
+    // ================= CRUD OPERATIONS (UPDATE & DELETE) =================
+    
+    // UPDATE: Open Modal and populate current patient vitals
+    function openUpdatePatientModal(patientId) {
+      const patient = AppState.patients.find(p => p.id === patientId) || AppState.activePatientDetail;
+      if (!patient) return;
+
+      document.getElementById('update-patient-id').value = patient.id;
+      document.getElementById('update-patient-name-display').innerText = patient.name;
+      document.getElementById('update-patient-id-display').innerText = `${patient.id} • ${patient.bay}`;
+
+      // Set severity radio
+      const rads = document.querySelectorAll('input[name="update-severity"]');
+      rads.forEach(r => {
+        r.checked = (r.value === patient.severity);
+      });
+
+      // Set vitals
+      document.getElementById('update-hr').value = patient.vitals.hr;
+      document.getElementById('update-bp').value = patient.vitals.bp;
+      document.getElementById('update-sugar').value = patient.vitals.sugar;
+      document.getElementById('update-temp').value = patient.vitals.temp;
+      document.getElementById('update-notes').value = patient.condition;
+
+      document.getElementById('modal-update-patient').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeUpdatePatientModal() {
+      document.getElementById('modal-update-patient').classList.add('hidden');
+    }
+
+    // UPDATE: Handle update submit -> Local state + PUT /api/v1/patients/{id}
+    function handleUpdatePatientSubmit(e) {
+      e.preventDefault();
+      const patientId = document.getElementById('update-patient-id').value;
+      const patient = AppState.patients.find(p => p.id === patientId);
+      if (!patient) return;
+
+      const selectedSeverity = document.querySelector('input[name="update-severity"]:checked')?.value || patient.severity;
+      const newHr = parseInt(document.getElementById('update-hr').value) || patient.vitals.hr;
+      const newBp = document.getElementById('update-bp').value || patient.vitals.bp;
+      const newSugar = parseInt(document.getElementById('update-sugar').value) || patient.vitals.sugar;
+      const newTemp = parseFloat(document.getElementById('update-temp').value) || patient.vitals.temp;
+      const newNotes = document.getElementById('update-notes').value || patient.condition;
+
+      // Update patient model
+      patient.severity = selectedSeverity;
+      if (selectedSeverity === 'High') patient.severityScore = 95;
+      else if (selectedSeverity === 'Middle') patient.severityScore = 60;
+      else patient.severityScore = 20;
+
+      patient.vitals.hr = newHr;
+      patient.vitals.bp = newBp;
+      patient.vitals.sugar = newSugar;
+      patient.vitals.temp = newTemp;
+      patient.condition = newNotes;
+
+      // Auto-re-rank triage list immediately (High cascades to top, Middle to middle, Zero to bottom)
+      AppState.patients = sortPatientsByUrgency(AppState.patients);
+
+      // Async sync to REST API (PUT)
+      try {
+        fetch(`/api/v1/patients/${patientId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: patientId,
+            severity: selectedSeverity,
+            heart_rate: newHr,
+            blood_pressure: newBp,
+            sugar_level: newSugar,
+            temperature: newTemp,
+            condition: newNotes,
+            updated_at: new Date().toISOString()
+          })
+        }).catch(() => {});
+      } catch(err) {}
+
+      closeUpdatePatientModal();
+      showToast('Patient Record Updated (PUT)', `${patient.name} updated to ${selectedSeverity} Urgency. Triage grid re-ranked.`, 'success');
+      playBeep(920, 0.1);
+
+      // Refresh screens
+      render8ScreenTriage();
+      if (AppState.currentView === 'screen-patient-detail' && AppState.activePatientDetail?.id === patientId) {
+        renderPatientDetail(patient);
+      }
+    }
+
+    // DELETE: Open Confirm Discharge Dialog
+    function openDischargeModal(patientId) {
+      const patient = AppState.patients.find(p => p.id === patientId) || AppState.activePatientDetail;
+      if (!patient) return;
+
+      document.getElementById('discharge-patient-id').value = patient.id;
+      document.getElementById('discharge-patient-name').innerText = patient.name;
+      document.getElementById('discharge-patient-bay').innerText = `Assigned Bay: ${patient.bay} • Severity: ${patient.severity}`;
+
+      document.getElementById('modal-confirm-discharge').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeDischargeModal() {
+      document.getElementById('modal-confirm-discharge').classList.add('hidden');
+    }
+
+    // DELETE: Handle confirm discharge -> Local state + DELETE /api/v1/patients/{id}
+    function handleConfirmDischarge() {
+      const patientId = document.getElementById('discharge-patient-id').value;
+      const patient = AppState.patients.find(p => p.id === patientId);
+      const patientName = patient ? patient.name : patientId;
+
+      // Remove from in-memory queue
+      AppState.patients = AppState.patients.filter(p => p.id !== patientId);
+
+      // Async sync to REST API (DELETE)
+      try {
+        fetch(`/api/v1/patients/${patientId}`, {
+          method: 'DELETE'
+        }).catch(() => {});
+      } catch(err) {}
+
+      closeDischargeModal();
+      showToast('Patient Discharged (DELETE)', `${patientName} discharged. ER Bay released.`, 'alert');
+      playBeep(650, 0.12);
+
+      render8ScreenTriage();
+      if (AppState.currentView === 'screen-patient-detail') {
+        navigateTo('screen-triage');
+      }
+    }
+
+    // ================= KEBAB MENU & STATUS TOGGLE (CRUD UX) =================
+    function toggleCardKebabMenu(patientId, event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById(`kebab-menu-${patientId}`);
+      if (!menu) return;
+      const isHidden = menu.classList.contains('hidden');
+      closeAllKebabMenus();
+      if (isHidden) {
+        menu.classList.remove('hidden');
+        lucide.createIcons();
+      }
+    }
+
+    function closeAllKebabMenus() {
+      document.querySelectorAll('.kebab-dropdown').forEach(m => m.classList.add('hidden'));
+    }
+
+    // Global listener to close dropdowns when clicking outside
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.kebab-dropdown') && !e.target.closest('button[title="Patient Actions"]')) {
+        closeAllKebabMenus();
+      }
+    });
+
+    // Update Status: 'Approved' vs 'Not Approved'
+    function togglePatientStatus(patientId, newStatus) {
+      closeAllKebabMenus();
+      const patient = AppState.patients.find(p => p.id === patientId);
+      if (!patient) return;
+
+      patient.admissionStatus = newStatus;
+
+      // Async sync to server via PATCH
+      try {
+        fetch(`/api/v1/patients/${patientId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admissionStatus: newStatus })
+        }).catch(() => {});
+      } catch(err) {}
+
+      showToast(`Status: ${newStatus}`, `${patient.name} marked as ${newStatus}.`, newStatus === 'Approved' ? 'success' : 'info');
+      playBeep(newStatus === 'Approved' ? 950 : 750, 0.08);
+
+      render8ScreenTriage();
+      if (AppState.currentView === 'screen-patient-detail' && AppState.activePatientDetail?.id === patientId) {
+        renderPatientDetail(patient);
+      }
+    }
+
+    // ================= INITIALIZATION ON PAGE LOAD =================
+    window.addEventListener('DOMContentLoaded', () => {
+      // Apply saved theme on page load
+      setTheme(AppState.theme || 'light');
+
+      // Initialize icons
+      lucide.createIcons();
+
+      // Start at Secure Login screen with hidden navbar as per clinical workflow
+      navigateTo('screen-login');
+    });
+  </script>
+</body>
+</html>

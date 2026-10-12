@@ -1,0 +1,123 @@
+[
+  {
+    "case_id": "AMB-9649",
+    "patient_status": "Middle",
+    "heart_rate": 94,
+    "oxygen_level": 92,
+    "patient_name": "pavn",
+    "blood_pressure": "132/86",
+    "sugar_level": 128,
+    "temperature": 99.1,
+    "equipment": [
+      "IV Infusion Pump"
+    ],
+    "timestamp": "2:24:41 PM",
+    "received_at": "2026-10-11T14:24:41.686145",
+    "id": "AMB-9649"
+  },
+  {
+    "case_id": "AMB-9048",
+    "patient_status": "High",
+    "heart_rate": 134,
+    "oxygen_level": 92,
+    "patient_name": "Julian Ramirez",
+    "blood_pressure": "175/105",
+    "sugar_level": 230,
+    "temperature": 101.4,
+    "equipment": [
+      "Defibrillator (AED)",
+      "Portable Ventilator",
+      "12-Lead ECG Telemetry",
+      "Oxygen Concentrator"
+    ],
+    "timestamp": "2:58:17 PM",
+    "received_at": "2026-10-11T14:58:17.707733",
+    "id": "AMB-9048"
+  },
+  {
+    "case_id": "AMB-9763",
+    "patient_status": "Middle",
+    "heart_rate": 94,
+    "oxygen_level": 92,
+    "patient_name": "Nora Sterling",
+    "blood_pressure": "132/86",
+    "sugar_level": 128,
+    "temperature": 99.1,
+    "equipment": [
+      "IV Infusion Pump"
+    ],
+    "timestamp": "8:51:36 am",
+    "received_at": "2026-10-06T08:51:36.796941",
+    "id": "AMB-9763"
+  },
+  {
+    "id": "WALK-7075",
+    "mrn": "CF-33349",
+    "name": "sudhsanva",
+    "age": 32,
+    "gender": "Female",
+    "blood": "A+",
+    "bay": "General Walk-In Triage",
+    "arrival": "Just now",
+    "condition": "Walk-in routine checkup",
+    "severity": "Middle",
+    "severityScore": 48,
+    "vitals": {
+      "hr": 76,
+      "bp": "120/80",
+      "sugar": 95,
+      "temp": 98.6,
+      "spo2": 99
+    },
+    "equipment": [
+      "Standard Monitoring"
+    ],
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=faces",
+    "contact": "+1 (555) 294-8190",
+    "admissions": [],
+    "labs": [
+      {
+        "test": "Vital Check",
+        "value": "Normal",
+        "ref": "Standard",
+        "status": "STABLE",
+        "isAlert": false
+      }
+    ],
+    "healthIssues": [
+      {
+        "title": "Routine Visit",
+        "type": "Intake",
+        "desc": "Walk-in routine checkup"
+      }
+    ],
+    "insurance": {
+      "carrier": "Standard Health PPO",
+      "policyId": "STD-109283",
+      "groupNum": "GRP-100",
+      "coveragePercent": 80,
+      "subscription": "Standard Patient Portal (Active)"
+    },
+    "billing": [
+      {
+        "item": "Outpatient Triage Consultation",
+        "code": "99202",
+        "cost": 180
+      },
+      {
+        "item": "Routine Diagnostic Observation",
+        "code": "99211",
+        "cost": 95
+      }
+    ],
+    "received_at": "2026-10-06T08:30:16.776731"
+  },
+  {
+    "case_id": "AMB-9999",
+    "patient_status": "High",
+    "heart_rate": 140,
+    "oxygen_level": 89,
+    "timestamp": "00:25:00",
+    "received_at": "2026-10-06T00:29:16.271653"
+  }
+]
